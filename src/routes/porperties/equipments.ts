@@ -1,48 +1,48 @@
 import { Hono } from 'hono';
 import {neon} from "@neondatabase/serverless";
 import {drizzle} from "drizzle-orm/neon-http";
-import {externalAdviser} from "../db/schema";
 import {eq} from "drizzle-orm";
+import {authMiddleware} from "../../middleware/auth";
+import {equipment} from "../../db/schema";
 
 export type Env = {
     NEON_DB: string;
-    JWT_SECRET: string;
 }
 
-const externalAdvisersRoutes = new Hono<{ Bindings: Env }>();
+const equipments = new Hono< {Bindings: Env }>();
 
-externalAdvisersRoutes.get('', async (c) => {
+equipments.get('/', authMiddleware, async (c) => {
     const sql = neon(c.env.NEON_DB);
     const db = drizzle(sql);
-    const data = await db.select().from(externalAdviser);
+    const data = await db.select().from(equipment);
     return c.json({ data });
 })
 
-externalAdvisersRoutes.post('/', async (c) => {
+equipments.post('/', async (c) => {
     const payload: any = await c.req.json();
 
     const sql = neon(c.env.NEON_DB);
     const db = drizzle(sql);
-    const newAlly = await db.insert(externalAdviser).values(payload).returning();
+    const newAlly = await db.insert(equipment).values(payload).returning();
     return c.json({ data: newAlly[0] });
 })
 
-externalAdvisersRoutes.patch('/:allieId', async (c) => {
+equipments.patch('/:allieId', async (c) => {
     const params: any = c.req.param();
     const payload: any = await c.req.json();
 
     const sql = neon(c.env.NEON_DB);
     const db = drizzle(sql);
-    const updatedAlly = await db.update(externalAdviser).set(payload).where(eq(externalAdviser.id, params.allieId)).returning();
+    const updatedAlly = await db.update(equipment).set(payload).where(eq(equipment.id, params.allieId)).returning();
     return c.json({ data: updatedAlly[0] });
 })
 
-externalAdvisersRoutes.delete('/:id', async (c) => {
+equipments.delete('/:id', async (c) => {
     const params: any = c.req.param();
     const sql = neon(c.env.NEON_DB);
     const db = drizzle(sql);
-    await db.delete(externalAdviser).where(eq(externalAdviser.id, params.id));
+    await db.delete(equipment).where(eq(equipment.id, params.id));
     return c.json({ message: 'Ally deleted successfully' });
 })
 
-export default externalAdvisersRoutes;
+export default equipments;

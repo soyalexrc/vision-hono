@@ -1,48 +1,48 @@
 import { Hono } from 'hono';
 import {neon} from "@neondatabase/serverless";
 import {drizzle} from "drizzle-orm/neon-http";
-import {externalAdviser} from "../db/schema";
 import {eq} from "drizzle-orm";
+import {authMiddleware} from "../../middleware/auth";
+import {adjacency} from "../../db/schema";
 
 export type Env = {
     NEON_DB: string;
-    JWT_SECRET: string;
 }
 
-const externalAdvisersRoutes = new Hono<{ Bindings: Env }>();
+const adjacencies = new Hono< {Bindings: Env }>();
 
-externalAdvisersRoutes.get('', async (c) => {
+adjacencies.get('/', authMiddleware, async (c) => {
     const sql = neon(c.env.NEON_DB);
     const db = drizzle(sql);
-    const data = await db.select().from(externalAdviser);
+    const data = await db.select().from(adjacency);
     return c.json({ data });
 })
 
-externalAdvisersRoutes.post('/', async (c) => {
+adjacencies.post('/', async (c) => {
     const payload: any = await c.req.json();
 
     const sql = neon(c.env.NEON_DB);
     const db = drizzle(sql);
-    const newAlly = await db.insert(externalAdviser).values(payload).returning();
+    const newAlly = await db.insert(adjacency).values(payload).returning();
     return c.json({ data: newAlly[0] });
 })
 
-externalAdvisersRoutes.patch('/:allieId', async (c) => {
+adjacencies.patch('/:allieId', async (c) => {
     const params: any = c.req.param();
     const payload: any = await c.req.json();
 
     const sql = neon(c.env.NEON_DB);
     const db = drizzle(sql);
-    const updatedAlly = await db.update(externalAdviser).set(payload).where(eq(externalAdviser.id, params.allieId)).returning();
+    const updatedAlly = await db.update(adjacency).set(payload).where(eq(adjacency.id, params.allieId)).returning();
     return c.json({ data: updatedAlly[0] });
 })
 
-externalAdvisersRoutes.delete('/:id', async (c) => {
+adjacencies.delete('/:id', async (c) => {
     const params: any = c.req.param();
     const sql = neon(c.env.NEON_DB);
     const db = drizzle(sql);
-    await db.delete(externalAdviser).where(eq(externalAdviser.id, params.id));
+    await db.delete(adjacency).where(eq(adjacency.id, params.id));
     return c.json({ message: 'Ally deleted successfully' });
 })
 
-export default externalAdvisersRoutes;
+export default adjacencies;

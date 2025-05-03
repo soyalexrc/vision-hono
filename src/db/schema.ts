@@ -531,6 +531,42 @@ export const propertyToDistribution = pgTable("_PropertyToDistribution", {
 		}).onUpdate("cascade").onDelete("cascade"),
 ]);
 
+export const passkey = pgTable("Passkey", {
+	id: text().primaryKey().notNull(),
+	userId: text().notNull(),
+	backedUp: boolean().default(false).notNull(),
+	counter: integer().default(0).notNull(),
+	credentialId: text().notNull(),
+	deviceType: text().notNull(),
+	platform: text().notNull(),
+	publicKey: text().notNull(),
+	transports: text().array(),
+	createdAt: timestamp({ precision: 3, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
+	updatedAt: timestamp({ precision: 3, mode: 'string' }).notNull(),
+}, (table) => [
+	uniqueIndex("Passkey_userId_key").using("btree", table.userId.asc().nullsLast().op("text_ops")),
+]);
+
+export const user = pgTable("User", {
+	email: text().notNull(),
+	username: text().notNull(),
+	phoneNumber: text(),
+	firstName: text(),
+	lastName: text(),
+	imageUrl: text(),
+	createdAt: timestamp({ precision: 3, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
+	updatedAt: timestamp({ precision: 3, mode: 'string' }).notNull(),
+	role: text().notNull(),
+	isActive: boolean().default(true).notNull(),
+	permissions: jsonb(),
+	isSuperAdmin: boolean().default(false).notNull(),
+	lastLogin: timestamp({ precision: 3, mode: 'string' }),
+	twoFactorEnabled: boolean().default(false).notNull(),
+	password: text().notNull(),
+	id: serial().primaryKey().notNull(),
+	pushToken: text(),
+});
+
 export const adjacenciesOnProperties = pgTable("AdjacenciesOnProperties", {
 	propertyId: text().notNull(),
 	adjacencyId: integer().notNull(),
