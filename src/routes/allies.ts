@@ -1,15 +1,16 @@
 import { Hono } from 'hono';
 import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
-import { ally } from '../db/schema';
+import { drizzle as drizzleD1 } from 'drizzle-orm/d1';
+import { ally } from '../db/schema-old';
 import { eq } from 'drizzle-orm';
 import { authMiddleware } from '../middleware/auth';
 import jsonError from '../utils/jsonError';
-import {OwnerSchema} from "../dto/owner.dto";
 import {AllyDto} from "../dto/ally.dto";
 
 export type Env = {
     NEON_DB: string;
+    DB_GESTION: D1Database
 };
 
 const allies = new Hono<{ Bindings: Env }>();
@@ -17,10 +18,9 @@ const allies = new Hono<{ Bindings: Env }>();
 // GET /allies
 allies.get('/', authMiddleware, async (c) => {
     try {
-        const sql = neon(c.env.NEON_DB);
-        const db = drizzle(sql);
-        const data = await db.select().from(ally);
-        return c.json({ data });
+        const db = drizzleD1(c.env.DB_GESTION);
+        const data = await db.select().from(ally).all();
+        return c.json(data);
     } catch (error: any) {
         return jsonError(c, {
             status: 500,

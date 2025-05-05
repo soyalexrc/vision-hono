@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm/relations";
-import { cashFlowProperty, cashFlow, property, documentsInformation, generalInformation, locationInformation, negotiationInfomation, propertyStatusEntry, attribute, attributeToProperty, equipment, equipmentToProperty, adjacency, adjacencyToProperty, propertyToUtility, utility, service, subService, distribution, propertyToDistribution, adjacenciesOnProperties, utilitiesOnProperties, distributionsOnProperties, attributesOnProperties, equipmentsOnProperties } from "./schema";
+import { cashFlowProperty, cashFlow, property, documentsInformation, generalInformation, locationInformation, negotiationInfomation, propertyStatusEntry, attribute, attributeToProperty, equipment, equipmentToProperty, adjacency, adjacencyToProperty, propertyToUtility, utility, service, subService, distribution, propertyToDistribution, adjacenciesOnProperties, utilitiesOnProperties, distributionsOnProperties, attributesOnProperties, equipmentsOnProperties } from "./schema-old";
 
 export const cashFlowRelations = relations(cashFlow, ({one}) => ({
 	cashFlowProperty: one(cashFlowProperty, {

@@ -3,7 +3,7 @@ import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
 import { eq } from 'drizzle-orm';
 import { authMiddleware } from '../../middleware/auth';
-import { distribution } from '../../db/schema';
+import { distribution } from '../../db/schema-old';
 import {DistributionDto, DistributionPatchDto} from "../../dto/property/distribution.dto";
 
 export type Env = {

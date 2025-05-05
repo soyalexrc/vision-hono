@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1746447312106,
+      "tag": "0000_typical_angel",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1746448215499,
+      "tag": "0001_loving_golden_guardian",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1746448340871,
+      "tag": "0002_windy_nighthawk",
+      "breakpoints": true
+    }
+  ]
+}
