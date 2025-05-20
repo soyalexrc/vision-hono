@@ -2,8 +2,9 @@ import { Hono } from 'hono';
 import jsonError from '../utils/jsonError';
 import {neon} from "@neondatabase/serverless";
 import {drizzle} from "drizzle-orm/neon-http";
-import {categories} from "../db/schema";
-import {count} from "drizzle-orm";
+import {ally, categories} from "../db/schema";
+import {count, eq} from "drizzle-orm";
+import {AllyDto} from "../dto/ally.dto";
 
 export type Env = {
     NEON_DB: string;
@@ -17,14 +18,14 @@ allies.get('/', async (c) => {
         const sql = neon(c.env.NEON_DB);
         const db = drizzle(sql);
         const [data, countResult] = await Promise.all([
-            db.select().from(categories),
-            db.select({ count: count() }).from(categories)
+            db.select().from(ally),
+            db.select({ count: count() }).from(ally)
         ]);
 
         const countRows = countResult[0]?.count || 0;
 
         return c.json({
-            allies: data,
+            data,
             count: countRows
         });
     } catch (error: any) {
@@ -32,6 +33,34 @@ allies.get('/', async (c) => {
         return jsonError(c, {
             status: 500,
             message: 'Failed to fetch allies',
+            code: 'DATABASE_ERROR',
+        });
+    }
+});
+
+// GET BY ID /allies/:id
+allies.get('/:id', async (c) => {
+    try {
+        const id = c.req.param('id');
+        if (!id) {
+            return jsonError(c, {
+                status: 400,
+                message: 'ID is required',
+                code: 'VALIDATION_ERROR',
+            });
+        }
+
+        const sql = neon(c.env.NEON_DB);
+        const db = drizzle(sql);
+        const data = await db.select().from(ally).where(eq(ally.id, Number(id)));
+        return c.json({
+            data: data[0],
+        });
+    } catch (error: any) {
+        console.log(error);
+        return jsonError(c, {
+            status: 500,
+            message: 'Failed to fetch ally',
             code: 'DATABASE_ERROR',
         });
     }
@@ -66,40 +95,40 @@ allies.get('/', async (c) => {
 // });
 
 // PATCH /allies/:allieId
-// allies.patch('/:allieId', async (c) => {
-//     try {
-//         const params: any = c.req.param();
-//
-//         if (!params.ownerId) {
-//             return jsonError(c, {
-//                 status: 400,
-//                 message: 'ID is required',
-//                 code: 'VALIDATION_ERROR',
-//             });
-//         }
-//
-//         const body = await c.req.json();
-//         const parsed = AllyDto.partial().safeParse(body); // PATCH = partial update
-//
-//         if (!parsed.success) {
-//             return jsonError(c, {
-//                 message: 'Validation failed',
-//                 status: 400,
-//                 code: 'VALIDATION_ERROR',
-//             });
-//         }
-//         const sql = neon(c.env.NEON_DB);
-//         const db = drizzle(sql);
-//         const updatedAlly = await db.update(ally).set(parsed.data).where(eq(ally.id, params.allieId)).returning();
-//         return c.json({ data: updatedAlly[0] });
-//     } catch (error: any) {
-//         return jsonError(c, {
-//             status: 500,
-//             message: 'Failed to update ally',
-//             code: 'DATABASE_ERROR',
-//         });
-//     }
-// });
+allies.patch('/:id', async (c) => {
+    try {
+        const id = c.req.param('id');
+
+        if (!id) {
+            return jsonError(c, {
+                status: 400,
+                message: 'ID is required',
+                code: 'VALIDATION_ERROR',
+            });
+        }
+
+        const body = await c.req.json();
+        const parsed = AllyDto.partial().safeParse(body); // PATCH = partial update
+
+        if (!parsed.success) {
+            return jsonError(c, {
+                message: 'Validation failed',
+                status: 400,
+                code: 'VALIDATION_ERROR',
+            });
+        }
+        const sql = neon(c.env.NEON_DB);
+        const db = drizzle(sql);
+        const updatedAlly = await db.update(ally).set(parsed.data).where(eq(ally.id, Number(id))).returning();
+        return c.json({ data: updatedAlly[0] });
+    } catch (error: any) {
+        return jsonError(c, {
+            status: 500,
+            message: 'Failed to update ally',
+            code: 'DATABASE_ERROR',
+        });
+    }
+});
 
 // DELETE /allies/:id
 // allies.delete('/:id', async (c) => {
