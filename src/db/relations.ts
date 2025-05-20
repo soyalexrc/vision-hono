@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm/relations";
-import { cashFlowProperty, cashFlow, property, documentsInformation, generalInformation, locationInformation, negotiationInfomation, propertyStatusEntry, attribute, attributeToProperty, equipment, equipmentToProperty, adjacency, adjacencyToProperty, propertyToUtility, utility, service, subService, distribution, propertyToDistribution, adjacenciesOnProperties, utilitiesOnProperties, distributionsOnProperties, attributesOnProperties, equipmentsOnProperties } from "./schema";
+import { cashFlowProperty, cashFlow, property, documentsInformation, generalInformation, locationInformation, negotiationInfomation, user, passkey, propertyStatusEntry, service, subService, adjacency, adjacencyToProperty, attribute, attributeToProperty, equipment, equipmentToProperty, distribution, propertyToDistribution, propertyToUtility, utility, adjacenciesOnProperties, distributionsOnProperties, utilitiesOnProperties, attributesOnProperties, equipmentsOnProperties } from "./schema";
 
 export const cashFlowRelations = relations(cashFlow, ({one}) => ({
 	cashFlowProperty: one(cashFlowProperty, {
@@ -25,14 +25,14 @@ export const propertyRelations = relations(property, ({many}) => ({
 	locationInformations: many(locationInformation),
 	negotiationInfomations: many(negotiationInfomation),
 	propertyStatusEntries: many(propertyStatusEntry),
+	adjacencyToProperties: many(adjacencyToProperty),
 	attributeToProperties: many(attributeToProperty),
 	equipmentToProperties: many(equipmentToProperty),
-	adjacencyToProperties: many(adjacencyToProperty),
-	propertyToUtilities: many(propertyToUtility),
 	propertyToDistributions: many(propertyToDistribution),
+	propertyToUtilities: many(propertyToUtility),
 	adjacenciesOnProperties: many(adjacenciesOnProperties),
-	utilitiesOnProperties: many(utilitiesOnProperties),
 	distributionsOnProperties: many(distributionsOnProperties),
+	utilitiesOnProperties: many(utilitiesOnProperties),
 	attributesOnProperties: many(attributesOnProperties),
 	equipmentsOnProperties: many(equipmentsOnProperties),
 }));
@@ -58,11 +58,49 @@ export const negotiationInfomationRelations = relations(negotiationInfomation, (
 	}),
 }));
 
+export const passkeyRelations = relations(passkey, ({one}) => ({
+	user: one(user, {
+		fields: [passkey.userId],
+		references: [user.id]
+	}),
+}));
+
+export const userRelations = relations(user, ({many}) => ({
+	passkeys: many(passkey),
+}));
+
 export const propertyStatusEntryRelations = relations(propertyStatusEntry, ({one}) => ({
 	property: one(property, {
 		fields: [propertyStatusEntry.propertyId],
 		references: [property.id]
 	}),
+}));
+
+export const subServiceRelations = relations(subService, ({one}) => ({
+	service: one(service, {
+		fields: [subService.serviceId],
+		references: [service.id]
+	}),
+}));
+
+export const serviceRelations = relations(service, ({many}) => ({
+	subServices: many(subService),
+}));
+
+export const adjacencyToPropertyRelations = relations(adjacencyToProperty, ({one}) => ({
+	adjacency: one(adjacency, {
+		fields: [adjacencyToProperty.a],
+		references: [adjacency.id]
+	}),
+	property: one(property, {
+		fields: [adjacencyToProperty.b],
+		references: [property.id]
+	}),
+}));
+
+export const adjacencyRelations = relations(adjacency, ({many}) => ({
+	adjacencyToProperties: many(adjacencyToProperty),
+	adjacenciesOnProperties: many(adjacenciesOnProperties),
 }));
 
 export const attributeToPropertyRelations = relations(attributeToProperty, ({one}) => ({
@@ -97,20 +135,20 @@ export const equipmentRelations = relations(equipment, ({many}) => ({
 	equipmentsOnProperties: many(equipmentsOnProperties),
 }));
 
-export const adjacencyToPropertyRelations = relations(adjacencyToProperty, ({one}) => ({
-	adjacency: one(adjacency, {
-		fields: [adjacencyToProperty.a],
-		references: [adjacency.id]
+export const propertyToDistributionRelations = relations(propertyToDistribution, ({one}) => ({
+	distribution: one(distribution, {
+		fields: [propertyToDistribution.a],
+		references: [distribution.id]
 	}),
 	property: one(property, {
-		fields: [adjacencyToProperty.b],
+		fields: [propertyToDistribution.b],
 		references: [property.id]
 	}),
 }));
 
-export const adjacencyRelations = relations(adjacency, ({many}) => ({
-	adjacencyToProperties: many(adjacencyToProperty),
-	adjacenciesOnProperties: many(adjacenciesOnProperties),
+export const distributionRelations = relations(distribution, ({many}) => ({
+	propertyToDistributions: many(propertyToDistribution),
+	distributionsOnProperties: many(distributionsOnProperties),
 }));
 
 export const propertyToUtilityRelations = relations(propertyToUtility, ({one}) => ({
@@ -129,33 +167,6 @@ export const utilityRelations = relations(utility, ({many}) => ({
 	utilitiesOnProperties: many(utilitiesOnProperties),
 }));
 
-export const subServiceRelations = relations(subService, ({one}) => ({
-	service: one(service, {
-		fields: [subService.serviceId],
-		references: [service.id]
-	}),
-}));
-
-export const serviceRelations = relations(service, ({many}) => ({
-	subServices: many(subService),
-}));
-
-export const propertyToDistributionRelations = relations(propertyToDistribution, ({one}) => ({
-	distribution: one(distribution, {
-		fields: [propertyToDistribution.a],
-		references: [distribution.id]
-	}),
-	property: one(property, {
-		fields: [propertyToDistribution.b],
-		references: [property.id]
-	}),
-}));
-
-export const distributionRelations = relations(distribution, ({many}) => ({
-	propertyToDistributions: many(propertyToDistribution),
-	distributionsOnProperties: many(distributionsOnProperties),
-}));
-
 export const adjacenciesOnPropertiesRelations = relations(adjacenciesOnProperties, ({one}) => ({
 	adjacency: one(adjacency, {
 		fields: [adjacenciesOnProperties.adjacencyId],
@@ -163,6 +174,17 @@ export const adjacenciesOnPropertiesRelations = relations(adjacenciesOnPropertie
 	}),
 	property: one(property, {
 		fields: [adjacenciesOnProperties.propertyId],
+		references: [property.id]
+	}),
+}));
+
+export const distributionsOnPropertiesRelations = relations(distributionsOnProperties, ({one}) => ({
+	distribution: one(distribution, {
+		fields: [distributionsOnProperties.distributionId],
+		references: [distribution.id]
+	}),
+	property: one(property, {
+		fields: [distributionsOnProperties.propertyId],
 		references: [property.id]
 	}),
 }));
@@ -175,17 +197,6 @@ export const utilitiesOnPropertiesRelations = relations(utilitiesOnProperties, (
 	utility: one(utility, {
 		fields: [utilitiesOnProperties.utilityId],
 		references: [utility.id]
-	}),
-}));
-
-export const distributionsOnPropertiesRelations = relations(distributionsOnProperties, ({one}) => ({
-	distribution: one(distribution, {
-		fields: [distributionsOnProperties.distributionId],
-		references: [distribution.id]
-	}),
-	property: one(property, {
-		fields: [distributionsOnProperties.propertyId],
-		references: [property.id]
 	}),
 }));
 
