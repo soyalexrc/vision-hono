@@ -3,7 +3,7 @@ import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
 import { eq } from 'drizzle-orm';
 import { authMiddleware } from '../../middleware/auth';
-import { utility } from '../../db/schema-old';
+import { utility } from '../../db/schema';
 import {UtilityDto, UtilityPatchDto} from "../../dto/property/utility.dto";
 
 export type Env = {

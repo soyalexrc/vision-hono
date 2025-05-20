@@ -14,37 +14,43 @@ import contactForms from "./routes/contact";
 import workWithUsForms from "./routes/work-with-us";
 import users from "./routes/users";
 import jsonError from "./utils/jsonError";
-import {authMiddleware} from "./middleware/auth";
+import { authMiddleware } from "./middleware/auth";
+import { cors } from 'hono/cors'
+
+const app = new Hono<{ Bindings: CloudflareBindings }>();
 
 const protectedRoutes = [
     'owners',
     'clients',
-    'allies',
+    // 'ally',
     'external-advisers',
     'users',
 ];
-
-const app = new Hono<{ Bindings: CloudflareBindings }>();
 
 for (const route of protectedRoutes) {
     app.use(route, authMiddleware);
 }
 
+app.use('*', cors({
+    origin: '*', // or specify allowed origins like: 'https://your-frontend.com'
+    allowMethods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowHeaders: ['Content-Type', 'Authorization'],
+}))
 
-app.route('allies', allies)
-app.route('external-advisers', externalAdvisers)
-app.route('categories', categories)
-app.route('auth', auth)
-app.route('clients', clients)
-app.route('owners', owners)
-app.route('utilities', utilities)
-app.route('attributes', attributes)
-app.route('equipments', equipments)
-app.route('distributions', distributions)
-app.route('properties', properties)
-app.route('contactForms', contactForms)
-app.route('workWithUsForms', workWithUsForms)
-app.route('users', users)
+app.route('ally', allies);
+app.route('external-advisers', externalAdvisers);
+app.route('categories', categories);
+app.route('auth', auth);
+app.route('clients', clients);
+app.route('owners', owners);
+app.route('utilities', utilities);
+app.route('attributes', attributes);
+app.route('equipments', equipments);
+app.route('distributions', distributions);
+app.route('properties', properties);
+app.route('contactForms', contactForms);
+app.route('workWithUsForms', workWithUsForms);
+app.route('users', users);
 
 app.onError((err, c) => {
     console.error('Unhandled Error:', err);
@@ -65,5 +71,8 @@ app.onError((err, c) => {
     });
 });
 
+// Mount under /api/v1
+const main = new Hono<{ Bindings: CloudflareBindings }>();
+main.route('/api/v1', app);
 
-export default app;
+export default main;

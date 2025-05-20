@@ -3,7 +3,7 @@ import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
 import { eq } from 'drizzle-orm';
 import { authMiddleware } from '../../middleware/auth';
-import { adjacency } from '../../db/schema-old';
+import { adjacency } from '../../db/schema';
 import {AdjacencyDto, AdjacencyPatchDto} from "../../dto/property/adjacency.dto";
 
 export type Env = {

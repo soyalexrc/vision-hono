@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
-import { workWithUsForm } from '../db/schema-old';
+import { workWithUsForm } from '../db/schema';
 import { eq } from 'drizzle-orm';
 import { authMiddleware } from '../middleware/auth';
 import { WorkWithUsDto, WorkWithUsPatchDto } from '../dto/work-with-us.dto';

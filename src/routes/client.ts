@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
-import { client } from '../db/schema-old';
+import { client } from '../db/schema';
 import { eq } from 'drizzle-orm';
 import { authMiddleware } from '../middleware/auth';
 import jsonError from '../utils/jsonError';

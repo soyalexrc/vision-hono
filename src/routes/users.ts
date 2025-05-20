@@ -1,24 +1,33 @@
 import { Hono } from 'hono';
-import { neon } from '@neondatabase/serverless';
+import { neon, Client } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
-import { user } from '../db/schema-old';
+import {user, users2} from '../db/schema';
 import { eq } from 'drizzle-orm';
 import { authMiddleware } from '../middleware/auth';
 import { UserDto, UserPatchDto } from '../dto/user.dto';
 import jsonError from "../utils/jsonError";
+import postgres from "postgres";
 
 export type Env = {
     NEON_DB: string;
+    HYPERDRIVE: Hyperdrive;
+    POSTGRES_ALT: Hyperdrive;
 };
 
 const users = new Hono<{ Bindings: Env }>();
 
-users.get('/', authMiddleware, async (c) => {
-    const sql = neon(c.env.NEON_DB);
-    const db = drizzle(sql);
 
-    const data = await db.select().from(user);
-    const count = await db.$count(user);
+users.get('/', authMiddleware, async (c) => {
+    const sql = postgres(c.env.POSTGRES_ALT.connectionString);
+    console.log('here')
+
+
+    const [data, countResult] = await Promise.all([
+        sql`select * from users`,
+        sql`select count(*) as count from users`
+    ]);
+
+    const count = countResult[0]?.count || 0;
 
     return c.json({ data, count });
 });

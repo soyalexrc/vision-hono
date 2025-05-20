@@ -1,4 +1,4 @@
-import { SignJWT } from 'jose'
+import {jwtVerify, SignJWT} from 'jose'
 import {config} from "dotenv";
 
 config({
@@ -13,4 +13,16 @@ export async function generateJWT(user: any) {
         .setIssuedAt()
         .setExpirationTime('2 days')
         .sign(secret)
+}
+
+export async function verifyJWT(token: string) {
+    const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
+
+    try {
+        const { payload } = await jwtVerify(token, secret);
+        return payload;
+    } catch (error) {
+        console.error('JWT verification failed:', error);
+        throw new Error('Invalid token');
+    }
 }

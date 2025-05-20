@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
-import { contactForm } from '../db/schema-old';
+import { contactForm } from '../db/schema';
 import { eq } from 'drizzle-orm';
 import { authMiddleware } from '../middleware/auth';
 import {ContactFormDto} from "../dto/contact-form.dto";

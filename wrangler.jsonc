@@ -10,14 +10,6 @@
   "compatibility_flags": [
     "nodejs_compat"
   ],
-  "d1_databases": [
-    {
-      "binding": "DB_GESTION",
-      "database_name": "vision-gestion",
-      "database_id": "b3f2cb79-2b3d-4fbc-8805-188e9f661328"
-    }
-
-  ],
   "assets": {
     "binding": "ASSETS",
     "directory": "./public"

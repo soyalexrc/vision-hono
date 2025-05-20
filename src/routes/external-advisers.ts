@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
-import { externalAdviser } from '../db/schema-old';
+import { externalAdviser } from '../db/schema';
 import { eq } from 'drizzle-orm';
 import {ExternalAdviserDto} from "../dto/external-adviser.dto";
 import jsonError from "../utils/jsonError";
