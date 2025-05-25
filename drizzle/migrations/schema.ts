@@ -130,6 +130,12 @@ export const deleteFileRequest = pgTable("DeleteFileRequest", {
 	type: text().notNull(),
 });
 
+export const externalPerson = pgTable("ExternalPerson", {
+	id: serial().primaryKey().notNull(),
+	name: text().notNull(),
+	source: text().notNull(),
+});
+
 export const externalAdviser = pgTable("ExternalAdviser", {
 	id: serial().primaryKey().notNull(),
 	name: text().notNull(),
@@ -137,12 +143,7 @@ export const externalAdviser = pgTable("ExternalAdviser", {
 	email: text().notNull(),
 	phoneNumber: text().notNull(),
 	realStateCompanyName: text().notNull(),
-});
-
-export const externalPerson = pgTable("ExternalPerson", {
-	id: serial().primaryKey().notNull(),
-	name: text().notNull(),
-	source: text().notNull(),
+	status: varchar({ length: 255 }).default('active'),
 });
 
 export const owner = pgTable("Owner", {
@@ -153,6 +154,7 @@ export const owner = pgTable("Owner", {
 	email: text().notNull(),
 	phoneNumber: text().notNull(),
 	birthdate: timestamp({ precision: 3, mode: 'string' }),
+	status: varchar({ length: 255 }).default('active'),
 });
 
 export const socialMediaLink = pgTable("SocialMediaLink", {
@@ -401,26 +403,6 @@ export const negotiationInfomation = pgTable("NegotiationInfomation", {
 		}).onUpdate("cascade").onDelete("restrict"),
 ]);
 
-export const user = pgTable("User", {
-	id: serial().primaryKey().notNull(),
-	email: text().notNull(),
-	username: text().notNull(),
-	phonenumber: text(),
-	firstname: text(),
-	lastname: text(),
-	imageurl: text(),
-	createdat: timestamp({ precision: 3, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
-	updatedat: timestamp({ precision: 3, mode: 'string' }).notNull(),
-	role: text().notNull(),
-	isactive: boolean().default(true).notNull(),
-	permissions: jsonb(),
-	issuperadmin: boolean().default(false).notNull(),
-	lastlogin: timestamp({ precision: 3, mode: 'string' }),
-	twofactorenabled: boolean().default(false).notNull(),
-	password: text().notNull(),
-	pushtoken: text(),
-});
-
 export const passkey = pgTable("Passkey", {
 	id: serial().primaryKey().notNull(),
 	userId: integer().notNull(),
@@ -572,6 +554,27 @@ export const propertyToUtility = pgTable("_PropertyToUtility", {
 			name: "_PropertyToUtility_B_fkey"
 		}).onUpdate("cascade").onDelete("cascade"),
 ]);
+
+export const user = pgTable("User", {
+	id: serial().primaryKey().notNull(),
+	email: text().notNull(),
+	username: text().notNull(),
+	phonenumber: text(),
+	firstname: text(),
+	lastname: text(),
+	imageurl: text(),
+	createdat: timestamp({ precision: 3, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
+	updatedat: timestamp({ precision: 3, mode: 'string' }).notNull(),
+	role: text().notNull(),
+	isactive: boolean().default(true).notNull(),
+	permissions: jsonb(),
+	issuperadmin: boolean().default(false).notNull(),
+	lastlogin: timestamp({ precision: 3, mode: 'string' }),
+	twofactorenabled: boolean().default(false).notNull(),
+	password: text().notNull(),
+	pushtoken: text(),
+	status: varchar({ length: 255 }).default('active'),
+});
 
 export const adjacenciesOnProperties = pgTable("AdjacenciesOnProperties", {
 	propertyId: text().notNull(),

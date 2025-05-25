@@ -6,7 +6,8 @@ export const OwnerSchema = z.object({
     name: z.string(),
     lastname: z.string(),
     isInvestor: z.boolean(),
-    birthdate: z.string(),
+    birthdate: z.string().optional(),
+    status: z.string(),
 });
 
 export type OwnerDTO = z.infer<typeof OwnerSchema>;

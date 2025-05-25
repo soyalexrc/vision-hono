@@ -35,6 +35,7 @@ clientsRoutes.get('/', authMiddleware, async (c) => {
 clientsRoutes.post('/', async (c) => {
     try {
         const body = await c.req.json();
+        console.log(body);
         const parsed = ClientDto.safeParse(body);
 
         if (!parsed.success) {
@@ -42,7 +43,8 @@ clientsRoutes.post('/', async (c) => {
                 message: 'Validation failed',
                 status: 400,
                 code: 'VALIDATION_ERROR',
-            });
+                details: parsed.error?.issues, // Add detailed error info
+        });
         }
         const sql = neon(c.env.NEON_DB);
         const db = drizzle(sql);

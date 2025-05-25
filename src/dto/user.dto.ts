@@ -1,22 +1,24 @@
 import { z } from 'zod';
 
 export const UserDto = z.object({
+    id: z.number(),
     email: z.string().email(),
     username: z.string().min(1),
-    phoneNumber: z.string(),
-    firstName: z.string(),
-    lastName: z.string(),
-    imageUrl: z.string().url(),
+    phoneNumber: z.string().optional(),
+    firstName: z.string().optional(),
+    lastName: z.string().optional(),
+    imageUrl: z.string().optional(),
+    createdat: z.string(),
+    updatedat: z.string(),
+    status: z.string(),
     role: z.string(),
     isActive: z.boolean().default(true),
-    createdAt: z.string(),
-    updatedAt: z.string(),
-    lastLogin: z.string(),
-    permissions: z.record(z.any()),
+    permissions: z.record(z.any()).optional(),
     isSuperAdmin: z.boolean().default(false),
+    lastLogin: z.string().optional(),
     twoFactorEnabled: z.boolean().default(false),
-    password: z.string().min(6),
-    pushToken: z.string(),
+    password: z.string().min(1),
+    pushToken: z.string().optional(),
 });
 
 export const UserPatchDto = UserDto.partial();

@@ -12,6 +12,7 @@ import distributions from "./routes/porperties/distributions";
 import properties from "./routes/porperties";
 import contactForms from "./routes/contact";
 import workWithUsForms from "./routes/work-with-us";
+import services from "./routes/service";
 import users from "./routes/users";
 import jsonError from "./utils/jsonError";
 import { authMiddleware } from "./middleware/auth";
@@ -38,19 +39,20 @@ app.use('*', cors({
 }))
 
 app.route('ally', allies);
-app.route('external-advisers', externalAdvisers);
-app.route('categories', categories);
+app.route('external-adviser', externalAdvisers);
+app.route('category', categories);
 app.route('auth', auth);
-app.route('clients', clients);
-app.route('owners', owners);
-app.route('utilities', utilities);
-app.route('attributes', attributes);
-app.route('equipments', equipments);
-app.route('distributions', distributions);
-app.route('properties', properties);
-app.route('contactForms', contactForms);
-app.route('workWithUsForms', workWithUsForms);
-app.route('users', users);
+app.route('client', clients);
+app.route('owner', owners);
+app.route('utility', utilities);
+app.route('attribute', attributes);
+app.route('equipment', equipments);
+app.route('distribution', distributions);
+app.route('property', properties);
+app.route('service', services);
+app.route('contactForm', contactForms);
+app.route('workWithUsForm', workWithUsForms);
+app.route('user', users);
 
 app.onError((err, c) => {
     console.error('Unhandled Error:', err);

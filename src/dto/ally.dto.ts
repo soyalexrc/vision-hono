@@ -5,6 +5,7 @@ export const AllyDto = z.object({
     phoneNumber: z.string(),
     name: z.string(),
     lastname: z.string(),
+    status: z.string(),
 });
 
 export type OwnerDTO = z.infer<typeof AllyDto>;

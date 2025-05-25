@@ -17,6 +17,8 @@ export const authMiddleware: MiddlewareHandler = async (c, next) => {
         return c.json({ error: 'Unauthorized' }, 401)
     }
 
+    // TODO buscar por id de usuario y revisar si es isactive o status es active
+
     const token = authHeader.split(' ')[1]
 
     try {
