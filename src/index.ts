@@ -34,7 +34,7 @@ for (const route of protectedRoutes) {
 
 app.use('*', cors({
     origin: '*', // or specify allowed origins like: 'https://your-frontend.com'
-    allowMethods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     allowHeaders: ['Content-Type', 'Authorization'],
 }))
 

@@ -1,4 +1,4 @@
-import { pgTable, serial, text, boolean, integer, timestamp, varchar, uniqueIndex, jsonb, foreignKey, index, primaryKey, pgSequence, pgEnum } from "drizzle-orm/pg-core"
+import { pgTable, serial, text, boolean, integer, timestamp, varchar, numeric, uniqueIndex, jsonb, foreignKey, index, primaryKey, pgSequence, pgEnum } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
 export const formTypes = pgEnum("FormTypes", ['check', 'text', 'select'])
@@ -105,8 +105,8 @@ export const client = pgTable("Client", {
 	allowyounger: varchar({ length: 256 }),
 	requestracking: text(),
 	isinwaitinglist: boolean(),
-	budgetfrom: integer(),
-	budgetto: integer(),
+	budgetfrom: numeric({ precision: 12, scale:  2 }),
+	budgetto: numeric({ precision: 12, scale:  2 }),
 	status: varchar({ length: 255 }),
 	adviserId: varchar("adviser_id", { length: 255 }),
 	adviserName: varchar("adviser_name", { length: 255 }),
