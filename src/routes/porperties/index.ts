@@ -20,6 +20,13 @@ properties.get('/', authMiddleware, async (c) => {
     return c.json({ data });
 });
 
+properties.get('/list', async (c) => {
+    const sql = neon(c.env.NEON_DB);
+    const db = drizzle(sql);
+    const data = await db.select().from(property);
+    return c.json({ data });
+});
+
 // POST a new property entry
 properties.post('/', async (c) => {
     const payload = await c.req.json();

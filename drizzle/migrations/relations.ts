@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm/relations";
-import { cashFlowProperty, cashFlow, property, documentsInformation, generalInformation, locationInformation, negotiationInfomation, user, passkey, propertyStatusEntry, service, subService, adjacency, adjacencyToProperty, attribute, attributeToProperty, equipment, equipmentToProperty, distribution, propertyToDistribution, propertyToUtility, utility, adjacenciesOnProperties, distributionsOnProperties, utilitiesOnProperties, attributesOnProperties, equipmentsOnProperties } from "./schema";
+import { cashFlowProperty, cashFlow, property, documentsInformation, generalInformation, locationInformation, negotiationInfomation, user, passkey, propertyStatusEntry, service, subService, adjacency, adjacencyToProperty, attribute, attributeToProperty, equipment, equipmentToProperty, distribution, propertyToDistribution, propertyToUtility, utility, client, clientHistory, adjacenciesOnProperties, distributionsOnProperties, utilitiesOnProperties, attributesOnProperties, equipmentsOnProperties } from "./schema";
 
 export const cashFlowRelations = relations(cashFlow, ({one}) => ({
 	cashFlowProperty: one(cashFlowProperty, {
@@ -165,6 +165,17 @@ export const propertyToUtilityRelations = relations(propertyToUtility, ({one}) =
 export const utilityRelations = relations(utility, ({many}) => ({
 	propertyToUtilities: many(propertyToUtility),
 	utilitiesOnProperties: many(utilitiesOnProperties),
+}));
+
+export const clientHistoryRelations = relations(clientHistory, ({one}) => ({
+	client: one(client, {
+		fields: [clientHistory.clientId],
+		references: [client.id]
+	}),
+}));
+
+export const clientRelations = relations(client, ({many}) => ({
+	clientHistories: many(clientHistory),
 }));
 
 export const adjacenciesOnPropertiesRelations = relations(adjacenciesOnProperties, ({one}) => ({

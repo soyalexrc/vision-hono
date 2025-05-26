@@ -123,6 +123,7 @@ clientsRoutes.patch('/:id', async (c) => {
             status: 500,
             message: 'Failed to update client',
             code: 'DATABASE_ERROR',
+            details: JSON.stringify(error)
         });
     }
 });
