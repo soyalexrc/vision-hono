@@ -12,6 +12,7 @@ import adjacencies from "./routes/properties/adjacencies";
 import distributions from "./routes/properties/distributions";
 import properties from "./routes/properties";
 import contactForms from "./routes/contact";
+import r2 from "./routes/r2";
 import workWithUsForms from "./routes/work-with-us";
 import services from "./routes/service";
 import users from "./routes/users";
@@ -54,6 +55,7 @@ app.route('property', properties);
 app.route('service', services);
 app.route('contactForm', contactForms);
 app.route('workWithUsForm', workWithUsForms);
+app.route('r2', r2)
 app.route('user', users);
 
 app.onError((err, c) => {
