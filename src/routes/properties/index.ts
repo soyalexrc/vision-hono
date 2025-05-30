@@ -1,9 +1,9 @@
 import { Hono } from 'hono';
 import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
-import { eq } from 'drizzle-orm';
+import { eq, sql as rawSql } from 'drizzle-orm';
 import { authMiddleware } from '../../middleware/auth';
-import { property } from '../../db/schema';
+import {generalInformation, negotiationInfomation, property} from '../../db/schema';
 import {PropertyDto, PropertyPatchDto} from "../../dto/property";
 
 export type Env = {
@@ -16,8 +16,31 @@ const properties = new Hono<{ Bindings: Env }>();
 properties.get('/', authMiddleware, async (c) => {
     const sql = neon(c.env.NEON_DB);
     const db = drizzle(sql);
-    const data = await db.select().from(property);
-    return c.json({ data });
+
+    const data = await db.select({
+        // Property fields
+        id: property.id,
+        coverUrl: property.images,
+        status: property.status,
+        createdAt: property.createdAt,
+        updatedAt: property.updatedAt,
+        isFeatured: property.isFeatured,
+        // General information fields
+        publicationTitle: generalInformation.publicationTitle,
+        code: generalInformation.code,
+        propertyType: generalInformation.propertyType,
+        // Negotiation fields
+        price: negotiationInfomation.price,
+        adviserName: negotiationInfomation.realstateadvisername,
+        operationType: negotiationInfomation.operationType,
+    })
+        .from(property)
+        .leftJoin(generalInformation, eq(property.id, generalInformation.propertyId)) // Add proper join condition
+        .leftJoin(negotiationInfomation, eq(property.id, negotiationInfomation.propertyId)); // Add proper join condition
+
+    return c.json({
+        data: data.map(item => ({ ...item, coverUrl: item.coverUrl!.length > 0 ? item.coverUrl![0] : [] })),
+    });
 });
 
 properties.get('/list', async (c) => {

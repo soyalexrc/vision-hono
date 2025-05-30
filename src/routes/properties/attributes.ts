@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
-import { eq } from 'drizzle-orm';
+import {desc, eq} from 'drizzle-orm';
 import { authMiddleware } from '../../middleware/auth';
 import { attribute } from '../../db/schema';
 import {AttributeDto, AttributePatchDto} from "../../dto/property/attribute.dto";
@@ -16,8 +16,8 @@ const attributes = new Hono<{ Bindings: Env }>();
 attributes.get('/', authMiddleware, async (c) => {
     const sql = neon(c.env.NEON_DB);
     const db = drizzle(sql);
-    const data = await db.select().from(attribute);
-    return c.json({ data });
+    const data = await db.select().from(attribute).orderBy(desc(attribute.id));
+    return c.json(data);
 });
 
 // POST a new attribute entry

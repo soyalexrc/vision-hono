@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
-import { client } from '../db/schema';
+import {client, clientHistory} from '../db/schema';
 import {eq, inArray} from 'drizzle-orm';
 import { authMiddleware } from '../middleware/auth';
 import jsonError from '../utils/jsonError';
@@ -115,7 +115,13 @@ clientsRoutes.patch('/:id', async (c) => {
         const sql = neon(c.env.NEON_DB);
         const db = drizzle(sql);
         const updatedClient = await db.update(client).set(parsed.data).where(eq(client.id, params.id)).returning();
-        console.log(updatedClient[0])
+        if (updatedClient[0]) {
+            await db.insert(clientHistory).values({
+                changes: parsed.data.changes ?? {},
+                clientId: params.id,
+                updatedBy: parsed.data.updatedby ?? {}
+            })
+        }
 
         return c.json({ data: updatedClient[0] });
     } catch (error: any) {

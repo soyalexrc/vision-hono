@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
-import { eq } from 'drizzle-orm';
+import {desc, eq} from 'drizzle-orm';
 import { authMiddleware } from '../../middleware/auth';
 import { utility } from '../../db/schema';
 import {UtilityDto, UtilityPatchDto} from "../../dto/property/utility.dto";
@@ -15,8 +15,8 @@ const utilities = new Hono<{ Bindings: Env }>();
 utilities.get('/', authMiddleware, async (c) => {
     const sql = neon(c.env.NEON_DB);
     const db = drizzle(sql);
-    const data = await db.select().from(utility);
-    return c.json({ data });
+    const data = await db.select().from(utility).orderBy(desc(utility.id));
+    return c.json(data);
 });
 
 utilities.post('/', async (c) => {

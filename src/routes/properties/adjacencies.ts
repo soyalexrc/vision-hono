@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
-import { eq } from 'drizzle-orm';
+import {desc, eq} from 'drizzle-orm';
 import { authMiddleware } from '../../middleware/auth';
 import { adjacency } from '../../db/schema';
 import {AdjacencyDto, AdjacencyPatchDto} from "../../dto/property/adjacency.dto";
@@ -16,8 +16,8 @@ const adjacencies = new Hono<{ Bindings: Env }>();
 adjacencies.get('/', authMiddleware, async (c) => {
     const sql = neon(c.env.NEON_DB);
     const db = drizzle(sql);
-    const data = await db.select().from(adjacency);
-    return c.json({ data });
+    const data = await db.select().from(adjacency).orderBy(desc(adjacency.id));
+    return c.json(data);
 });
 
 // POST a new adjacency entry

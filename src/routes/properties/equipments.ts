@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
-import { eq } from 'drizzle-orm';
+import {desc, eq} from 'drizzle-orm';
 import { authMiddleware } from '../../middleware/auth';
 import { equipment } from '../../db/schema';
 import {EquipmentDto, EquipmentPatchDto} from "../../dto/property/equipment.dto";
@@ -16,8 +16,8 @@ const equipments = new Hono<{ Bindings: Env }>();
 equipments.get('/', authMiddleware, async (c) => {
     const sql = neon(c.env.NEON_DB);
     const db = drizzle(sql);
-    const data = await db.select().from(equipment);
-    return c.json({ data });
+    const data = await db.select().from(equipment).orderBy(desc(equipment.id));
+    return c.json(data);
 });
 
 // POST a new equipment entry

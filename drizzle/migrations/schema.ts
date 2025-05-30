@@ -1,4 +1,4 @@
-import { pgTable, serial, text, boolean, timestamp, varchar, integer, uniqueIndex, jsonb, foreignKey, index, numeric, primaryKey, pgSequence, pgEnum } from "drizzle-orm/pg-core"
+import { pgTable, serial, text, boolean, timestamp, varchar, integer, foreignKey, uniqueIndex, index, jsonb, numeric, primaryKey, pgSequence, pgEnum } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
 export const formTypes = pgEnum("FormTypes", ['check', 'text', 'select'])
@@ -140,21 +140,6 @@ export const adjacency = pgTable("Adjacency", {
 	title: text().notNull(),
 	description: text(),
 });
-
-export const property = pgTable("Property", {
-	id: text().primaryKey().notNull(),
-	userId: text().notNull(),
-	images: text().array(),
-	distribution: jsonb().array(),
-	createdAt: timestamp({ precision: 3, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
-	furnishedAreas: text().array(),
-	slug: text().notNull(),
-	updatedAt: timestamp({ precision: 3, mode: 'string' }).notNull(),
-	isFeatured: boolean().default(false),
-	active: boolean().default(false).notNull(),
-}, (table) => [
-	uniqueIndex("Property_slug_key").using("btree", table.slug.asc().nullsLast().op("text_ops")),
-]);
 
 export const attribute = pgTable("Attribute", {
 	label: text().notNull(),
@@ -443,6 +428,22 @@ export const attributeToProperty = pgTable("_AttributeToProperty", {
 		}).onUpdate("cascade").onDelete("cascade"),
 ]);
 
+export const property = pgTable("Property", {
+	id: text().primaryKey().notNull(),
+	userId: text().notNull(),
+	images: text().array(),
+	distribution: jsonb().array(),
+	createdAt: timestamp({ precision: 3, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
+	furnishedAreas: text().array(),
+	slug: text().notNull(),
+	updatedAt: timestamp({ precision: 3, mode: 'string' }).notNull(),
+	isFeatured: boolean().default(false),
+	active: boolean().default(false).notNull(),
+	status: varchar({ length: 20 }),
+}, (table) => [
+	uniqueIndex("Property_slug_key").using("btree", table.slug.asc().nullsLast().op("text_ops")),
+]);
+
 export const equipmentToProperty = pgTable("_EquipmentToProperty", {
 	a: integer("A").notNull(),
 	b: text("B").notNull(),
@@ -590,11 +591,9 @@ export const client = pgTable("Client", {
 	adviserId: varchar("adviser_id", { length: 255 }),
 	adviserName: varchar("adviser_name", { length: 255 }),
 	createdat: timestamp({ mode: 'string' }).defaultNow(),
-	updatedat: timestamp({ mode: 'string' }),
+	updatedat: timestamp({ mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
 	createdby: jsonb(),
 	updatedby: jsonb(),
-	updatedBy: jsonb("_updated_by"),
-	changes: jsonb("_changes"),
 });
 
 export const adjacenciesOnProperties = pgTable("AdjacenciesOnProperties", {

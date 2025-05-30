@@ -2,6 +2,9 @@ import { z } from 'zod';
 
 export const ClientDto = z.object({
     name: z.string(),
+    changes: z.any().optional(),
+    updatedby: z.any().optional(),
+    createdby: z.any().optional(),
     usageProperty: z.string().optional(),
     referrer: z.string().optional(),
     contactFrom: z.string(),

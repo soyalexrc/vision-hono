@@ -6,7 +6,7 @@ import {eq, inArray} from 'drizzle-orm';
 import { authMiddleware } from '../middleware/auth';
 import { UserDto, UserPatchDto } from '../dto/user.dto';
 import jsonError from "../utils/jsonError";
-import postgres from "postgres";
+import bcrypt from 'bcryptjs'
 
 export type Env = {
     NEON_DB: string;
@@ -25,46 +25,86 @@ users.get('/', authMiddleware, async (c) => {
 });
 
 users.post('/', async (c) => {
-    const body = await c.req.json();
-    const parsed = UserDto.safeParse(body);
+    try {
+        const body = await c.req.json();
+        const parsed = UserDto.safeParse(body);
 
-   if (!parsed.success) {
+        if (!parsed.success) {
+            return jsonError(c, {
+                message: 'Validation failed',
+                status: 400,
+                code: 'VALIDATION_ERROR',
+                details: JSON.stringify(parsed),
+            });
+        }
+
+        const sql = neon(c.env.NEON_DB);
+        const db = drizzle(sql);
+
+        const salt = bcrypt.genSaltSync(10)
+        const hashedPassword = bcrypt.hashSync(parsed.data.password, salt)
+
+        const newUser = await db.insert(user).values({...parsed.data, password: hashedPassword}).returning();
+        return c.json({ data: newUser[0] });
+    } catch (error) {
+        console.error('Error creating user:', error);
         return jsonError(c, {
-            message: 'Validation failed',
-            status: 400,
-            code: 'VALIDATION_ERROR',
+            status: 500,
+            message: 'Failed to create user',
+            code: 'DATABASE_ERROR',
+            details: JSON.stringify(error)
         });
     }
-
-    const sql = neon(c.env.NEON_DB);
-    const db = drizzle(sql);
-
-    const newUser = await db.insert(user).values(parsed.data).returning();
-    return c.json({ data: newUser[0] });
 });
 
 users.patch('/:userId', async (c) => {
-    const { userId } = c.req.param();
-    const body = await c.req.json();
-    const parsed = UserPatchDto.safeParse(body);
-   if (!parsed.success) {
+    try {
+        const { userId } = c.req.param();
+        const body = await c.req.json();
+        console.log(body)
+        const parsed = UserPatchDto.safeParse(body);
+        if (!parsed.success) {
+            return jsonError(c, {
+                message: 'Validation failed',
+                status: 400,
+                code: 'VALIDATION_ERROR',
+            });
+        }
+
+        const sql = neon(c.env.NEON_DB);
+        const db = drizzle(sql);
+
+        let password = '';
+
+        if (parsed.data.password) {
+            const salt = bcrypt.genSaltSync(10);
+            password = bcrypt.hashSync(parsed.data.password, salt);
+
+            const updatedUser = await db
+                .update(user)
+                .set({...parsed.data, password})
+                .where(eq(user.id, Number(userId)))
+                .returning();
+
+            return c.json({ data: updatedUser[0] });
+        }
+
+        const updatedUser = await db
+            .update(user)
+            .set(parsed.data)
+            .where(eq(user.id, Number(userId)))
+            .returning();
+
+        return c.json({ data: updatedUser[0] });
+    } catch (error) {
+        console.error('Error updating user:', error);
         return jsonError(c, {
-            message: 'Validation failed',
-            status: 400,
-            code: 'VALIDATION_ERROR',
+            status: 500,
+            message: 'Failed to update user',
+            code: 'DATABASE_ERROR',
+            details: JSON.stringify(error)
         });
     }
-
-    const sql = neon(c.env.NEON_DB);
-    const db = drizzle(sql);
-
-    const updatedUser = await db
-        .update(user)
-        .set(parsed.data)
-        .where(eq(user.id, Number(userId)))
-        .returning();
-
-    return c.json({ data: updatedUser[0] });
 });
 
 // DELETE /users/:id

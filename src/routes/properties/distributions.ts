@@ -1,9 +1,9 @@
 import { Hono } from 'hono';
 import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
-import { eq } from 'drizzle-orm';
+import {desc, eq} from 'drizzle-orm';
 import { authMiddleware } from '../../middleware/auth';
-import { distribution } from '../../db/schema';
+import {distribution} from '../../db/schema';
 import {DistributionDto, DistributionPatchDto} from "../../dto/property/distribution.dto";
 
 export type Env = {
@@ -16,8 +16,8 @@ const distributions = new Hono<{ Bindings: Env }>();
 distributions.get('/', authMiddleware, async (c) => {
     const sql = neon(c.env.NEON_DB);
     const db = drizzle(sql);
-    const data = await db.select().from(distribution);
-    return c.json({ data });
+    const data = await db.select().from(distribution).orderBy(desc(distribution.id));
+    return c.json(data);
 });
 
 // POST a new distribution entry
