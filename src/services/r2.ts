@@ -10,7 +10,7 @@ export class R2Service {
         const timestamp = Date.now();
         const randomString = Math.random().toString(36).substring(2, 15);
         const extension = originalName.split('.').pop() || '';
-        return `${folder}/${timestamp}-${randomString}.${extension}`;
+        return `${folder}/${timestamp}-${randomString}-${originalName}.${extension}`;
     }
 
     async uploadFile(file: File, folder = 'images') {

@@ -432,7 +432,6 @@ export const property = pgTable("Property", {
 	id: text().primaryKey().notNull(),
 	userId: text().notNull(),
 	images: text().array(),
-	distribution: jsonb().array(),
 	createdAt: timestamp({ precision: 3, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
 	furnishedAreas: text().array(),
 	slug: text().notNull(),
@@ -440,6 +439,7 @@ export const property = pgTable("Property", {
 	isFeatured: boolean().default(false),
 	active: boolean().default(false).notNull(),
 	status: varchar({ length: 20 }),
+	documents: text().array(),
 }, (table) => [
 	uniqueIndex("Property_slug_key").using("btree", table.slug.asc().nullsLast().op("text_ops")),
 ]);

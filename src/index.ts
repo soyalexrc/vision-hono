@@ -35,9 +35,10 @@ for (const route of protectedRoutes) {
 }
 
 app.use('*', cors({
-    origin: '*', // or specify allowed origins like: 'https://your-frontend.com'
+    origin: ['http://localhost:8083', 'https://admin.visioninmobiliaria.com.ve'],
     allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     allowHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
 }))
 
 app.route('ally', allies);
