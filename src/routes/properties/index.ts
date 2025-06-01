@@ -34,6 +34,7 @@ properties.get('/', authMiddleware, async (c) => {
         // Property fields
         id: property.id,
         coverUrl: property.images,
+        userId: property.userId,
         status: property.status,
         createdAt: property.createdAt,
         updatedAt: property.updatedAt,
