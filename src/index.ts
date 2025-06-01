@@ -4,6 +4,7 @@ import externalAdvisers from "./routes/external-advisers";
 import categories from "./routes/categories";
 import auth from "./routes/auth";
 import clients from "./routes/client";
+import config from "./routes/app-config";
 import owners from "./routes/owner";
 import utilities from "./routes/properties/utilities";
 import attributes from "./routes/properties/attributes";
@@ -25,7 +26,8 @@ const app = new Hono<{ Bindings: CloudflareBindings }>();
 const protectedRoutes = [
     'owners',
     'clients',
-    // 'ally',
+    'ally',
+    'config',
     'external-advisers',
     'users',
 ];
@@ -42,6 +44,7 @@ app.use('*', cors({
 }))
 
 app.route('ally', allies);
+app.route('config', config);
 app.route('external-adviser', externalAdvisers);
 app.route('category', categories);
 app.route('auth', auth);

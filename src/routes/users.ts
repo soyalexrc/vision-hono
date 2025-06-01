@@ -156,8 +156,8 @@ users.delete('/:id', async (c) => {
     }
 });
 
-// POST /users/delete-many
-users.post('/delete-many', async (c) => {
+// POST /users/remove-many
+users.post('/remove-many', async (c) => {
     try {
         const body = await c.req.json();
         const ids = body.ids;

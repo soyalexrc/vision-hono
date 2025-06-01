@@ -113,7 +113,7 @@ externalAdvisersRoutes.delete('/:id', async (c) => {
 });
 
 // POST /external-advisers/delete-many
-externalAdvisersRoutes.post('/delete-many', async (c) => {
+externalAdvisersRoutes.post('/remove-many', async (c) => {
     try {
         const body = await c.req.json();
         const ids = body.ids;

@@ -1,11 +1,11 @@
 import {Hono} from 'hono';
 import {neon} from '@neondatabase/serverless';
 import {drizzle} from 'drizzle-orm/neon-http';
-import {eq, sql, sql as rawSql} from 'drizzle-orm';
+import {eq, inArray, sql, sql as rawSql} from 'drizzle-orm';
 import {authMiddleware} from '../../middleware/auth';
 import Slugify from 'slugify'
 import {
-    adjacenciesOnProperties, adjacency,
+    adjacenciesOnProperties, adjacency, ally,
     attribute, attributesOnProperties, client, distribution, distributionsOnProperties,
     documentsInformation, equipment, equipmentsOnProperties,
     generalInformation,
@@ -16,6 +16,8 @@ import {
 import {PropertyDto, PropertyPatchDto} from "../../dto/property";
 import {v4 as uuid} from 'uuid';
 import jsonError from "../../utils/jsonError";
+import allies from "../allies";
+import {AllyDto} from "../../dto/ally.dto";
 
 export type Env = {
     NEON_DB: string;
@@ -50,7 +52,7 @@ properties.get('/', authMiddleware, async (c) => {
         .leftJoin(negotiationInfomation, eq(property.id, negotiationInfomation.propertyId)); // Add proper join condition
 
     return c.json({
-        data: data.map(item => ({...item, coverUrl: item.coverUrl!.length > 0 ? item.coverUrl![0] : []})),
+        data: data.map(item => ({...item, coverUrl: item.coverUrl!.length > 0 ? item.coverUrl![0] : '', images: item.coverUrl ? item.coverUrl : []})),
     });
 });
 
@@ -623,13 +625,218 @@ properties.patch('/:id', async (c) => {
     }
 });
 
+properties.patch('/status/:id', async (c) => {
+    try {
+        const id = c.req.param('id');
+
+        if (!id) {
+            return jsonError(c, {
+                status: 400,
+                message: 'ID is required',
+                code: 'VALIDATION_ERROR',
+            });
+        }
+
+        const { status } = await c.req.json();
+
+        const sql = neon(c.env.NEON_DB);
+        const db = drizzle(sql);
+        const updatedAlly = await db.update(property).set({
+            status
+        }).where(eq(property.id, id)).returning();
+        return c.json({ data: updatedAlly[0] });
+    } catch (error: any) {
+        return jsonError(c, {
+            status: 500,
+            message: 'Failed to update property',
+            code: 'DATABASE_ERROR',
+        });
+    }
+});
+
+properties.patch('/featured/:id', async (c) => {
+    try {
+        const id = c.req.param('id');
+
+        if (!id) {
+            return jsonError(c, {
+                status: 400,
+                message: 'ID is required',
+                code: 'VALIDATION_ERROR',
+            });
+        }
+
+        const { isFeatured } = await c.req.json();
+
+        const sql = neon(c.env.NEON_DB);
+        const db = drizzle(sql);
+        const updatedAlly = await db.update(property).set({
+            isFeatured
+        }).where(eq(property.id, id)).returning();
+        return c.json({ data: updatedAlly[0] });
+    } catch (error: any) {
+        return jsonError(c, {
+            status: 500,
+            message: 'Failed to update property',
+            code: 'DATABASE_ERROR',
+        });
+    }
+});
+
+
 // DELETE a property entry
 properties.delete('/:id', async (c) => {
-    const params = c.req.param();
-    const sql = neon(c.env.NEON_DB);
-    const db = drizzle(sql);
-    await db.delete(property).where(eq(property.id, params.id));
-    return c.json({message: 'Property deleted successfully'});
+    try {
+        const id = c.req.param('id');
+
+        if (!id) {
+            return jsonError(c, {
+                status: 400,
+                message: 'Ally ID is required',
+                code: 'VALIDATION_ERROR',
+            });
+        }
+
+        const sql = neon(c.env.NEON_DB);
+        const db = drizzle(sql);
+
+        const foundedProperty = await db.select().from(property).where(eq(property.id, id));
+
+        if (foundedProperty.length < 1) {
+            return jsonError(c, {
+                status: 404,
+                message: 'Ally not found',
+                code: 'NOT_FOUND',
+            });
+        }
+
+        const result = await db
+            .update(property)
+            .set({ status: 'deleted' })
+            .where(eq(property.id, id))
+            .returning();
+
+        return c.json({
+            data: result[0],
+            message: 'Property marked as deleted successfully',
+        });
+    } catch (error: any) {
+        console.error('Error deleting property:', error);
+        return jsonError(c, {
+            status: 500,
+            message: 'Failed to delete property',
+            code: 'DATABASE_ERROR',
+        });
+    }
 });
+
+// POST /allies/remove-many
+properties.post('/remove-many', async (c) => {
+    try {
+        const body = await c.req.json();
+        const ids = body.ids;
+
+        if (!Array.isArray(ids) || ids.length === 0) {
+            return jsonError(c, {
+                status: 400,
+                message: 'At least one ID must be provided',
+                code: 'VALIDATION_ERROR',
+            });
+        }
+
+        const sql = neon(c.env.NEON_DB);
+        const db = drizzle(sql);
+
+        const foundProperties = await db
+            .select({ id: property.id })
+            .from(property)
+            .where(inArray(property.id, ids));
+
+        const foundIds = foundProperties.map((a) => a.id);
+
+        if (foundIds.length === 0) {
+            return jsonError(c, {
+                status: 404,
+                message: 'No properties found to delete',
+                code: 'NOT_FOUND',
+            });
+        }
+
+        const result = await db
+            .update(property)
+            .set({ status: 'deleted' })
+            .where(inArray(property.id, foundIds))
+            .returning();
+
+        return c.json({
+            data: result,
+            updatedCount: result.length,
+            notFoundIds: ids.filter((id) => !foundIds.includes(id)),
+            message: 'Properties marked as deleted successfully',
+        });
+    } catch (error: any) {
+        console.error('Error removing properties:', error);
+        return jsonError(c, {
+            status: 500,
+            message: 'Failed to delete properties',
+            code: 'DATABASE_ERROR',
+        });
+    }
+});
+
+properties.post('/restore', async (c) => {
+    try {
+        const body = await c.req.json();
+        const id = body.id;
+
+        if (!id) {
+            return jsonError(c, {
+                status: 400,
+                message: 'Ally ID is required',
+                code: 'VALIDATION_ERROR',
+            });
+        }
+
+        const sql = neon(c.env.NEON_DB);
+        const db = drizzle(sql);
+
+        const foundedProperties = await db.select().from(property).where(eq(property.id, id));
+
+        if (foundedProperties.length < 1) {
+            return jsonError(c, {
+                status: 404,
+                message: 'Property not found',
+                code: 'NOT_FOUND',
+            });
+        }
+
+        const result = await db
+            .update(property)
+            .set({ status: 'active' })
+            .where(eq(property.id, id))
+            .returning();
+
+        if (result.length < 1) {
+            return jsonError(c, {
+                status: 404,
+                message: 'Failed to restore property',
+                code: 'NOT_FOUND',
+            });
+        }
+
+        return c.json({
+            data: result[0],
+            message: 'Ally restored successfully',
+        });
+    } catch (error: any) {
+        console.error('Error restoring property:', error);
+        return jsonError(c, {
+            status: 500,
+            message: 'Failed to restore property',
+            code: 'DATABASE_ERROR',
+        });
+    }
+});
+
 
 export default properties;

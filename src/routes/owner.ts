@@ -116,8 +116,8 @@ ownerRoutes.delete('/:id', async (c) => {
     }
 });
 
-// POST /owners/delete-many
-ownerRoutes.post('/delete-many', async (c) => {
+// POST /owners/remove-many
+ownerRoutes.post('/remove-many', async (c) => {
     try {
         const body = await c.req.json();
         const ids = body.ids;
