@@ -2,7 +2,6 @@ import { Hono } from 'hono';
 import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
 import {desc, eq} from 'drizzle-orm';
-import { authMiddleware } from '../../middleware/auth';
 import { adjacency } from '../../db/schema';
 import {AdjacencyDto, AdjacencyPatchDto} from "../../dto/property/adjacency.dto";
 
@@ -13,7 +12,7 @@ export type Env = {
 const adjacencies = new Hono<{ Bindings: Env }>();
 
 // GET all adjacencies
-adjacencies.get('/', authMiddleware, async (c) => {
+adjacencies.get('/', async (c) => {
     const sql = neon(c.env.NEON_DB);
     const db = drizzle(sql);
     const data = await db.select().from(adjacency).orderBy(desc(adjacency.id));

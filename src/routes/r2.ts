@@ -1,11 +1,5 @@
 import { Hono } from 'hono';
 import jsonError from '../utils/jsonError';
-import {neon} from "@neondatabase/serverless";
-import {drizzle} from "drizzle-orm/neon-http";
-import {ally, categories} from "../db/schema";
-import {count, eq, inArray} from "drizzle-orm";
-import {AllyDto} from "../dto/ally.dto";
-import {authMiddleware} from "../middleware/auth";
 import validateFile from "../utils/file";
 import {R2Service} from "../services/r2";
 
@@ -17,7 +11,7 @@ export type Env = {
 const r2 = new Hono<{ Bindings: Env }>();
 
 // Single file upload
-r2.post('/upload/single', authMiddleware, async (c) => {
+r2.post('/upload/single', async (c) => {
     try {
         // Get form data
         const formData = await c.req.formData();
@@ -76,7 +70,7 @@ r2.post('/upload/single', authMiddleware, async (c) => {
 });
 
 // Multiple files upload
-r2.post('/upload/multiple', authMiddleware, async (c) => {
+r2.post('/upload/multiple', async (c) => {
     try {
         // Get form data
         const formData = await c.req.formData();
@@ -162,7 +156,7 @@ r2.post('/upload/multiple', authMiddleware, async (c) => {
     }
 });
 
-r2.delete('/upload/:key', authMiddleware, async (c) => {
+r2.delete('/upload/:key', async (c) => {
     try {
         const key = c.req.param('key');
 
@@ -204,7 +198,7 @@ r2.delete('/upload/:key', authMiddleware, async (c) => {
 });
 
 // Get file info (optional)
-r2.get('/upload/info/:key', authMiddleware, async (c) => {
+r2.get('/upload/info/:key', async (c) => {
     try {
         const key = c.req.param('key');
 

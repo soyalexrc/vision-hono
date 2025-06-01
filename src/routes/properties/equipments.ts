@@ -2,7 +2,6 @@ import { Hono } from 'hono';
 import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
 import {desc, eq} from 'drizzle-orm';
-import { authMiddleware } from '../../middleware/auth';
 import { equipment } from '../../db/schema';
 import {EquipmentDto, EquipmentPatchDto} from "../../dto/property/equipment.dto";
 
@@ -13,7 +12,7 @@ export type Env = {
 const equipments = new Hono<{ Bindings: Env }>();
 
 // GET all equipment
-equipments.get('/', authMiddleware, async (c) => {
+equipments.get('/', async (c) => {
     const sql = neon(c.env.NEON_DB);
     const db = drizzle(sql);
     const data = await db.select().from(equipment).orderBy(desc(equipment.id));

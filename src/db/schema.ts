@@ -440,6 +440,8 @@ export const property = pgTable("Property", {
 	active: boolean().default(false).notNull(),
 	status: varchar({ length: 20 }),
 	documents: text().array(),
+	updatedby: jsonb(),
+	createdby: jsonb(),
 }, (table) => [
 	uniqueIndex("Property_slug_key").using("btree", table.slug.asc().nullsLast().op("text_ops")),
 ]);

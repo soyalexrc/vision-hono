@@ -3,7 +3,6 @@ import { neon, Client } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
 import {user} from '../db/schema';
 import {eq, inArray} from 'drizzle-orm';
-import { authMiddleware } from '../middleware/auth';
 import { UserDto, UserPatchDto } from '../dto/user.dto';
 import jsonError from "../utils/jsonError";
 import bcrypt from 'bcryptjs'
@@ -15,7 +14,7 @@ export type Env = {
 const users = new Hono<{ Bindings: Env }>();
 
 
-users.get('/', authMiddleware, async (c) => {
+users.get('/', async (c) => {
     const sql = neon(c.env.NEON_DB);
     const db = drizzle(sql);
     const data = await db.select().from(user);

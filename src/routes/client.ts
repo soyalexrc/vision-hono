@@ -1,11 +1,11 @@
 import { Hono } from 'hono';
 import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
-import {client, clientHistory} from '../db/schema';
+import {client, clientHistory, property} from '../db/schema';
 import {eq, inArray} from 'drizzle-orm';
-import { authMiddleware } from '../middleware/auth';
 import jsonError from '../utils/jsonError';
 import {ClientDto} from "../dto/client.dto";
+import properties from "./properties";
 
 export type Env = {
     NEON_DB: string;
@@ -14,7 +14,7 @@ export type Env = {
 const clientsRoutes = new Hono<{ Bindings: Env }>();
 
 // GET /clients
-clientsRoutes.get('/', authMiddleware, async (c) => {
+clientsRoutes.get('/', async (c) => {
     try {
         const sql = neon(c.env.NEON_DB);
         const db = drizzle(sql);
@@ -31,7 +31,7 @@ clientsRoutes.get('/', authMiddleware, async (c) => {
 });
 
 // GET /clients/:id
-clientsRoutes.get('/:id', authMiddleware, async (c) => {
+clientsRoutes.get('/:id', async (c) => {
     try {
         const params: any = c.req.param();
 
@@ -133,6 +133,37 @@ clientsRoutes.patch('/:id', async (c) => {
         });
     }
 });
+
+clientsRoutes.patch('/status/:id', async (c) => {
+    try {
+        const id = c.req.param('id');
+
+        if (!id) {
+            return jsonError(c, {
+                status: 400,
+                message: 'ID is required',
+                code: 'VALIDATION_ERROR',
+            });
+        }
+
+        const { status } = await c.req.json();
+
+        const sql = neon(c.env.NEON_DB);
+        const db = drizzle(sql);
+        const updatedClient = await db.update(client).set({
+            status
+        }).where(eq(client.id, Number(id))).returning();
+
+        return c.json({ data: updatedClient[0] });
+    } catch (error: any) {
+        return jsonError(c, {
+            status: 500,
+            message: 'Failed to update property',
+            code: 'DATABASE_ERROR',
+        });
+    }
+});
+
 
 // DELETE /allies/:id
 clientsRoutes.delete('/:id', async (c) => {

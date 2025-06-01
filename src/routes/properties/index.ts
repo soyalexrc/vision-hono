@@ -2,7 +2,6 @@ import {Hono} from 'hono';
 import {neon} from '@neondatabase/serverless';
 import {drizzle} from 'drizzle-orm/neon-http';
 import {eq, inArray, sql, sql as rawSql} from 'drizzle-orm';
-import {authMiddleware} from '../../middleware/auth';
 import Slugify from 'slugify'
 import {
     adjacenciesOnProperties, adjacency, ally,
@@ -26,7 +25,7 @@ export type Env = {
 const properties = new Hono<{ Bindings: Env }>();
 
 // GET all properties
-properties.get('/', authMiddleware, async (c) => {
+properties.get('/', async (c) => {
     const sql = neon(c.env.NEON_DB);
     const db = drizzle(sql);
 

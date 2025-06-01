@@ -3,7 +3,6 @@ import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
 import { workWithUsForm } from '../db/schema';
 import { eq } from 'drizzle-orm';
-import { authMiddleware } from '../middleware/auth';
 import { WorkWithUsDto, WorkWithUsPatchDto } from '../dto/work-with-us.dto';
 import jsonError from "../utils/jsonError";
 
@@ -13,7 +12,7 @@ export type Env = {
 
 const workWithUsForms = new Hono<{ Bindings: Env }>();
 
-workWithUsForms.get('/', authMiddleware, async (c) => {
+workWithUsForms.get('/', async (c) => {
     const sql = neon(c.env.NEON_DB);
     const db = drizzle(sql);
     const data = await db.select().from(workWithUsForm);

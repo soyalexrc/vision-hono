@@ -1,10 +1,17 @@
-import { pgTable, serial, text, boolean, timestamp, varchar, integer, foreignKey, uniqueIndex, index, jsonb, numeric, primaryKey, pgSequence, pgEnum } from "drizzle-orm/pg-core"
+import { pgTable, text, serial, boolean, timestamp, varchar, integer, foreignKey, uniqueIndex, index, jsonb, numeric, primaryKey, pgSequence, pgEnum } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
 export const formTypes = pgEnum("FormTypes", ['check', 'text', 'select'])
 export const formValueTypes = pgEnum("FormValueTypes", ['string', 'boolean', 'number'])
 
 export const temporalidIdSeq = pgSequence("temporalid_id_seq", {  startWith: "1", increment: "1", minValue: "1", maxValue: "9223372036854775807", cache: "1", cycle: false })
+
+export const appConfig = pgTable("AppConfig", {
+	id: text().primaryKey().notNull(),
+	code: text().notNull(),
+	description: text().notNull(),
+	value: text().notNull(),
+});
 
 export const ally = pgTable("Ally", {
 	id: serial().primaryKey().notNull(),
@@ -13,13 +20,6 @@ export const ally = pgTable("Ally", {
 	email: text().notNull(),
 	phoneNumber: text().notNull(),
 	status: text().default('active').notNull(),
-});
-
-export const appConfig = pgTable("AppConfig", {
-	id: text().primaryKey().notNull(),
-	code: text().notNull(),
-	description: text().notNull(),
-	value: text().notNull(),
 });
 
 export const cashFlowCurrency = pgTable("CashFlowCurrency", {
@@ -440,6 +440,8 @@ export const property = pgTable("Property", {
 	active: boolean().default(false).notNull(),
 	status: varchar({ length: 20 }),
 	documents: text().array(),
+	updatedby: jsonb(),
+	createdby: jsonb(),
 }, (table) => [
 	uniqueIndex("Property_slug_key").using("btree", table.slug.asc().nullsLast().op("text_ops")),
 ]);

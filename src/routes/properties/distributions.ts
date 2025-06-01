@@ -2,7 +2,6 @@ import { Hono } from 'hono';
 import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
 import {desc, eq} from 'drizzle-orm';
-import { authMiddleware } from '../../middleware/auth';
 import {distribution} from '../../db/schema';
 import {DistributionDto, DistributionPatchDto} from "../../dto/property/distribution.dto";
 
@@ -13,7 +12,7 @@ export type Env = {
 const distributions = new Hono<{ Bindings: Env }>();
 
 // GET all distributions
-distributions.get('/', authMiddleware, async (c) => {
+distributions.get('/', async (c) => {
     const sql = neon(c.env.NEON_DB);
     const db = drizzle(sql);
     const data = await db.select().from(distribution).orderBy(desc(distribution.id));

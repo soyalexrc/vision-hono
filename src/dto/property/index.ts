@@ -14,12 +14,12 @@ export const PropertyDto = z.object({
     furnishedAreas: z.any().optional(),
     status: z.string().default('inactive'),
     updatedby: z.any().optional(),
-    changes: z.any().optional(),
     createdby: z.any().optional(),
+    changes: z.any().optional(),
     isFeatured: z.boolean().default(false),
     active: z.boolean().default(false),
-    // createdAt: z.string().optional(),
-    // updatedAt: z.string().optional(),
+    createdAt: z.string().optional(),
+    updatedAt: z.string().optional(),
     slug: z.string().optional(),
     // General info
     generalInformation: z.object({
