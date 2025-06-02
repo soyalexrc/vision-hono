@@ -35,6 +35,7 @@ properties.get('/', async (c) => {
         coverUrl: property.images,
         slug: property.slug,
         userId: property.userId,
+        codeId: property.codeId,
         realStateAdviser: negotiationInfomation.realStateAdviser,
         status: property.status,
         createdAt: property.createdAt,
