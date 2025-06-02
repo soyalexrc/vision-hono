@@ -310,6 +310,7 @@ properties.post('/', async (c) => {
             active: parsed.data.active,
             status: parsed.data.status,
             updatedAt: rawSql`now()`,
+            createdby: parsed.data.createdby,
         }).returning();
 
         const [newGeneralInfo] = await db.insert(generalInformation).values({
@@ -501,6 +502,7 @@ properties.patch('/:id', async (c) => {
                 images: parsed.data.images,
                 documents: parsed.data.documents,
                 updatedAt: rawSql`now()`,
+                updatedby: parsed.data.updatedby,
             })
             .where(eq(property.id, params.id))
 
