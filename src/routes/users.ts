@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { neon, Client } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
 import {user} from '../db/schema';
-import {eq, inArray} from 'drizzle-orm';
+import {eq, inArray, sql as rawSql} from 'drizzle-orm';
 import { UserDto, UserPatchDto } from '../dto/user.dto';
 import jsonError from "../utils/jsonError";
 import bcrypt from 'bcryptjs'
@@ -43,7 +43,10 @@ users.post('/', async (c) => {
         const salt = bcrypt.genSaltSync(10)
         const hashedPassword = bcrypt.hashSync(parsed.data.password, salt)
 
-        const newUser = await db.insert(user).values({...parsed.data, password: hashedPassword}).returning();
+        const newUser = await db.insert(user).values({
+            ...parsed.data,
+            password: hashedPassword,
+        }).returning();
         return c.json({ data: newUser[0] });
     } catch (error) {
         console.error('Error creating user:', error);
@@ -81,7 +84,11 @@ users.patch('/:userId', async (c) => {
 
             const updatedUser = await db
                 .update(user)
-                .set({...parsed.data, password})
+                .set({
+                    ...parsed.data,
+                    password,
+                    updatedat: rawSql`now()`,
+                })
                 .where(eq(user.id, Number(userId)))
                 .returning();
 

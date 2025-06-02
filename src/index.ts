@@ -20,28 +20,44 @@ import users from "./routes/users";
 import jsonError from "./utils/jsonError";
 import { authMiddleware } from "./middleware/auth";
 import { cors } from 'hono/cors'
+import {debugMiddleware} from "./middleware/debug";
 
 const app = new Hono<{ Bindings: CloudflareBindings }>();
 
-const protectedRoutes = [
-    'owners',
-    'clients',
-    'ally',
-    'config',
-    'external-advisers',
-    'users',
-];
-
-for (const route of protectedRoutes) {
-    app.use(route, authMiddleware);
-}
-
+// 1. CORS MUST come first - before any other middleware
 app.use('*', cors({
     origin: ['http://localhost:8083', 'https://admin.visioninmobiliaria.com.ve'],
-    allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-    allowHeaders: ['Content-Type', 'Authorization'],
+    allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
     credentials: true,
+    exposeHeaders: ['Authorization'], // Add this if you need to expose auth headers
 }))
+
+// 2. Add preflight handling explicitly (sometimes needed)
+// app.options('*', (c) => c.text('', 204))
+
+// 3. Public routes (these should come BEFORE protected routes)
+app.get('/', (c) => c.text('API is running'))
+app.get('/health', (c) => c.json({ status: 'ok' }))
+
+
+const protectedRoutes = [
+    'owner',
+    'client',
+    'ally',
+    'config',
+    'external-adviser',
+    'user',
+];
+
+// Apply auth middleware to protected routes with proper patterns
+for (const route of protectedRoutes) {
+    // This applies to all HTTP methods and sub-routes under each route
+    app.use(`/${route}/*`, authMiddleware)
+    app.use(`/${route}`, authMiddleware) // Also protect the base route
+}
+
+app.use('*', debugMiddleware);
 
 app.route('ally', allies);
 app.route('config', config);

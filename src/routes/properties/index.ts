@@ -33,7 +33,9 @@ properties.get('/', async (c) => {
         // Property fields
         id: property.id,
         coverUrl: property.images,
+        slug: property.slug,
         userId: property.userId,
+        realStateAdviser: negotiationInfomation.realStateAdviser,
         status: property.status,
         createdAt: property.createdAt,
         updatedAt: property.updatedAt,
@@ -44,7 +46,7 @@ properties.get('/', async (c) => {
         propertyType: generalInformation.propertyType,
         // Negotiation fields
         price: negotiationInfomation.price,
-        adviserName: negotiationInfomation.realstateadvisername,
+        realstateadvisername: negotiationInfomation.realstateadvisername,
         operationType: negotiationInfomation.operationType,
     })
         .from(property)

@@ -509,7 +509,7 @@ export const user = pgTable("User", {
 	lastname: text(),
 	imageurl: text(),
 	createdat: timestamp({ precision: 3, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
-	updatedat: timestamp({ precision: 3, mode: 'string' }).notNull(),
+	updatedat: timestamp({ precision: 3, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
 	role: text().notNull(),
 	isactive: boolean().default(true).notNull(),
 	permissions: jsonb(),
