@@ -5,6 +5,7 @@ export const formTypes = pgEnum("FormTypes", ['check', 'text', 'select'])
 export const formValueTypes = pgEnum("FormValueTypes", ['string', 'boolean', 'number'])
 
 export const temporalidIdSeq = pgSequence("temporalid_id_seq", {  startWith: "1", increment: "1", minValue: "1", maxValue: "9223372036854775807", cache: "1", cycle: false })
+export const propertyCodeidSeq = pgSequence("property_codeid_seq", {  startWith: "87", increment: "1", minValue: "1", maxValue: "9223372036854775807", cache: "1", cycle: false })
 
 export const ally = pgTable("Ally", {
 	id: serial().primaryKey().notNull(),
@@ -442,6 +443,7 @@ export const property = pgTable("Property", {
 	documents: text().array(),
 	updatedby: jsonb(),
 	createdby: jsonb(),
+	codeId: integer().default(sql`nextval('property_codeid_seq'::regclass)`).notNull(),
 }, (table) => [
 	uniqueIndex("Property_slug_key").using("btree", table.slug.asc().nullsLast().op("text_ops")),
 ]);

@@ -5,6 +5,7 @@ export const formTypes = pgEnum("FormTypes", ['check', 'text', 'select'])
 export const formValueTypes = pgEnum("FormValueTypes", ['string', 'boolean', 'number'])
 
 export const temporalidIdSeq = pgSequence("temporalid_id_seq", {  startWith: "1", increment: "1", minValue: "1", maxValue: "9223372036854775807", cache: "1", cycle: false })
+export const propertyCodeidSeq = pgSequence("property_codeid_seq", {  startWith: "87", increment: "1", minValue: "1", maxValue: "9223372036854775807", cache: "1", cycle: false })
 
 export const appConfig = pgTable("AppConfig", {
 	id: text().primaryKey().notNull(),
@@ -428,24 +429,6 @@ export const attributeToProperty = pgTable("_AttributeToProperty", {
 		}).onUpdate("cascade").onDelete("cascade"),
 ]);
 
-export const property = pgTable("Property", {
-	id: text().primaryKey().notNull(),
-	userId: text().notNull(),
-	images: text().array(),
-	createdAt: timestamp({ precision: 3, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
-	furnishedAreas: text().array(),
-	slug: text().notNull(),
-	updatedAt: timestamp({ precision: 3, mode: 'string' }).notNull(),
-	isFeatured: boolean().default(false),
-	active: boolean().default(false).notNull(),
-	status: varchar({ length: 20 }),
-	documents: text().array(),
-	updatedby: jsonb(),
-	createdby: jsonb(),
-}, (table) => [
-	uniqueIndex("Property_slug_key").using("btree", table.slug.asc().nullsLast().op("text_ops")),
-]);
-
 export const equipmentToProperty = pgTable("_EquipmentToProperty", {
 	a: integer("A").notNull(),
 	b: text("B").notNull(),
@@ -597,6 +580,25 @@ export const client = pgTable("Client", {
 	createdby: jsonb(),
 	updatedby: jsonb(),
 });
+
+export const property = pgTable("Property", {
+	id: text().primaryKey().notNull(),
+	userId: text().notNull(),
+	images: text().array(),
+	createdAt: timestamp({ precision: 3, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
+	furnishedAreas: text().array(),
+	slug: text().notNull(),
+	updatedAt: timestamp({ precision: 3, mode: 'string' }).notNull(),
+	isFeatured: boolean().default(false),
+	active: boolean().default(false).notNull(),
+	status: varchar({ length: 20 }),
+	documents: text().array(),
+	updatedby: jsonb(),
+	createdby: jsonb(),
+	codeId: integer().default(sql`nextval('property_codeid_seq'::regclass)`).notNull(),
+}, (table) => [
+	uniqueIndex("Property_slug_key").using("btree", table.slug.asc().nullsLast().op("text_ops")),
+]);
 
 export const adjacenciesOnProperties = pgTable("AdjacenciesOnProperties", {
 	propertyId: text().notNull(),
