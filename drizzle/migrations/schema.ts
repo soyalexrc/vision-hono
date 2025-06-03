@@ -1,4 +1,4 @@
-import { pgTable, text, serial, boolean, timestamp, varchar, integer, foreignKey, uniqueIndex, index, jsonb, numeric, primaryKey, pgSequence, pgEnum } from "drizzle-orm/pg-core"
+import { pgTable, text, serial, boolean, timestamp, varchar, integer, uniqueIndex, foreignKey, index, jsonb, doublePrecision, numeric, primaryKey, pgSequence, pgEnum } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
 export const formTypes = pgEnum("FormTypes", ['check', 'text', 'select'])
@@ -73,12 +73,6 @@ export const deleteFileRequest = pgTable("DeleteFileRequest", {
 	type: text().notNull(),
 });
 
-export const externalPerson = pgTable("ExternalPerson", {
-	id: serial().primaryKey().notNull(),
-	name: text().notNull(),
-	source: text().notNull(),
-});
-
 export const externalAdviser = pgTable("ExternalAdviser", {
 	id: serial().primaryKey().notNull(),
 	name: text().notNull(),
@@ -98,6 +92,12 @@ export const owner = pgTable("Owner", {
 	phoneNumber: text().notNull(),
 	birthdate: timestamp({ precision: 3, mode: 'string' }),
 	status: varchar({ length: 255 }).default('active'),
+});
+
+export const externalPerson = pgTable("ExternalPerson", {
+	id: serial().primaryKey().notNull(),
+	name: text().notNull(),
+	source: text().notNull(),
 });
 
 export const socialMediaLink = pgTable("SocialMediaLink", {
@@ -155,42 +155,6 @@ export const cashFlowProperty = pgTable("CashFlowProperty", {
 	name: text().notNull(),
 	locatiuon: text().notNull(),
 });
-
-export const cashFlow = pgTable("CashFlow", {
-	id: serial().primaryKey().notNull(),
-	client: text(),
-	userName: text().notNull(),
-	userId: text().notNull(),
-	owner: text(),
-	location: text(),
-	person: text(),
-	date: timestamp({ precision: 3, mode: 'string' }).notNull(),
-	month: text().notNull(),
-	transactionType: text().notNull(),
-	wayToPay: text().notNull(),
-	service: text().notNull(),
-	serviceType: text(),
-	taxPayer: text(),
-	canon: text(),
-	guarantee: text(),
-	contract: text(),
-	reason: text(),
-	createdBy: text().notNull(),
-	isTemporalTransaction: boolean(),
-	temporalTransactionId: integer(),
-	amount: integer(),
-	totalDue: integer(),
-	incomeByThird: integer(),
-	attachments: integer(),
-	pendingToCollect: integer(),
-	cashFlowPropertyId: integer().notNull(),
-}, (table) => [
-	foreignKey({
-			columns: [table.cashFlowPropertyId],
-			foreignColumns: [cashFlowProperty.id],
-			name: "CashFlow_cashFlowPropertyId_fkey"
-		}).onUpdate("cascade").onDelete("restrict"),
-]);
 
 export const distribution = pgTable("Distribution", {
 	id: serial().primaryKey().notNull(),
@@ -427,6 +391,66 @@ export const attributeToProperty = pgTable("_AttributeToProperty", {
 			foreignColumns: [property.id],
 			name: "_AttributeToProperty_B_fkey"
 		}).onUpdate("cascade").onDelete("cascade"),
+]);
+
+export const cashFlow = pgTable("CashFlow", {
+	id: serial().primaryKey().notNull(),
+	client: text(),
+	userName: text().notNull(),
+	userId: integer().notNull(),
+	owner: text(),
+	location: text(),
+	person: text(),
+	date: timestamp({ precision: 3, mode: 'string' }).notNull(),
+	month: text().notNull(),
+	transactionType: text().notNull(),
+	wayToPay: text().notNull(),
+	service: text().notNull(),
+	serviceType: text(),
+	taxPayer: text(),
+	canon: text(),
+	guarantee: text(),
+	contract: text(),
+	reason: text(),
+	createdBy: jsonb().notNull(),
+	isTemporalTransaction: boolean(),
+	temporalTransactionId: integer(),
+	amount: doublePrecision(),
+	totalDue: doublePrecision(),
+	incomeByThird: doublePrecision(),
+	attachments: integer(),
+	pendingToCollect: doublePrecision(),
+	propertyid: integer(),
+	clientid: integer(),
+	ownerid: integer(),
+	updatedby: jsonb(),
+	personid: integer(),
+}, (table) => [
+	foreignKey({
+			columns: [table.propertyid],
+			foreignColumns: [cashFlowProperty.id],
+			name: "cashflow_cashflowpropertyid_fkey"
+		}),
+	foreignKey({
+			columns: [table.clientid],
+			foreignColumns: [client.id],
+			name: "cashflow_clientid_fkey"
+		}),
+	foreignKey({
+			columns: [table.ownerid],
+			foreignColumns: [owner.id],
+			name: "cashflow_ownerid_fkey"
+		}),
+	foreignKey({
+			columns: [table.userId],
+			foreignColumns: [user.id],
+			name: "cashflow_userid_fk"
+		}),
+	foreignKey({
+			columns: [table.personid],
+			foreignColumns: [externalPerson.id],
+			name: "cashflow_personid_fk"
+		}),
 ]);
 
 export const equipmentToProperty = pgTable("_EquipmentToProperty", {

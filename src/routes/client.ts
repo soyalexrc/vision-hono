@@ -71,6 +71,8 @@ clientsRoutes.post('/', async (c) => {
                 details: parsed.error?.issues, // Add detailed error info
         });
         }
+        console.log('Parsed data:', parsed.data);
+
         const sql = neon(c.env.NEON_DB);
         const db = drizzle(sql);
         const newClient = await db.insert(client).values(parsed.data).returning();

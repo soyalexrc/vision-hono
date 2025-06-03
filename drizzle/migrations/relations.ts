@@ -1,16 +1,5 @@
 import { relations } from "drizzle-orm/relations";
-import { cashFlowProperty, cashFlow, property, documentsInformation, generalInformation, locationInformation, negotiationInfomation, user, passkey, propertyStatusEntry, service, subService, adjacency, adjacencyToProperty, attribute, attributeToProperty, equipment, equipmentToProperty, distribution, propertyToDistribution, propertyToUtility, utility, client, clientHistory, adjacenciesOnProperties, distributionsOnProperties, utilitiesOnProperties, attributesOnProperties, equipmentsOnProperties } from "./schema";
-
-export const cashFlowRelations = relations(cashFlow, ({one}) => ({
-	cashFlowProperty: one(cashFlowProperty, {
-		fields: [cashFlow.cashFlowPropertyId],
-		references: [cashFlowProperty.id]
-	}),
-}));
-
-export const cashFlowPropertyRelations = relations(cashFlowProperty, ({many}) => ({
-	cashFlows: many(cashFlow),
-}));
+import { property, documentsInformation, generalInformation, locationInformation, negotiationInfomation, user, passkey, propertyStatusEntry, service, subService, adjacency, adjacencyToProperty, attribute, attributeToProperty, cashFlowProperty, cashFlow, client, owner, externalPerson, equipment, equipmentToProperty, distribution, propertyToDistribution, propertyToUtility, utility, clientHistory, adjacenciesOnProperties, distributionsOnProperties, utilitiesOnProperties, attributesOnProperties, equipmentsOnProperties } from "./schema";
 
 export const documentsInformationRelations = relations(documentsInformation, ({one}) => ({
 	property: one(property, {
@@ -67,6 +56,7 @@ export const passkeyRelations = relations(passkey, ({one}) => ({
 
 export const userRelations = relations(user, ({many}) => ({
 	passkeys: many(passkey),
+	cashFlows: many(cashFlow),
 }));
 
 export const propertyStatusEntryRelations = relations(propertyStatusEntry, ({one}) => ({
@@ -117,6 +107,46 @@ export const attributeToPropertyRelations = relations(attributeToProperty, ({one
 export const attributeRelations = relations(attribute, ({many}) => ({
 	attributeToProperties: many(attributeToProperty),
 	attributesOnProperties: many(attributesOnProperties),
+}));
+
+export const cashFlowRelations = relations(cashFlow, ({one}) => ({
+	cashFlowProperty: one(cashFlowProperty, {
+		fields: [cashFlow.propertyid],
+		references: [cashFlowProperty.id]
+	}),
+	client: one(client, {
+		fields: [cashFlow.clientid],
+		references: [client.id]
+	}),
+	owner: one(owner, {
+		fields: [cashFlow.ownerid],
+		references: [owner.id]
+	}),
+	user: one(user, {
+		fields: [cashFlow.userId],
+		references: [user.id]
+	}),
+	externalPerson: one(externalPerson, {
+		fields: [cashFlow.personid],
+		references: [externalPerson.id]
+	}),
+}));
+
+export const cashFlowPropertyRelations = relations(cashFlowProperty, ({many}) => ({
+	cashFlows: many(cashFlow),
+}));
+
+export const clientRelations = relations(client, ({many}) => ({
+	cashFlows: many(cashFlow),
+	clientHistories: many(clientHistory),
+}));
+
+export const ownerRelations = relations(owner, ({many}) => ({
+	cashFlows: many(cashFlow),
+}));
+
+export const externalPersonRelations = relations(externalPerson, ({many}) => ({
+	cashFlows: many(cashFlow),
 }));
 
 export const equipmentToPropertyRelations = relations(equipmentToProperty, ({one}) => ({
@@ -172,10 +202,6 @@ export const clientHistoryRelations = relations(clientHistory, ({one}) => ({
 		fields: [clientHistory.clientId],
 		references: [client.id]
 	}),
-}));
-
-export const clientRelations = relations(client, ({many}) => ({
-	clientHistories: many(clientHistory),
 }));
 
 export const adjacenciesOnPropertiesRelations = relations(adjacenciesOnProperties, ({one}) => ({
