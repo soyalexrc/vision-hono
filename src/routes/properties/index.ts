@@ -264,6 +264,227 @@ properties.get('/edit/:id', async (c) => {
         });
     }
 });
+
+properties.get('/detail/:id', async (c) => {
+    try {
+        const params = c.req.param();
+
+        if (!params.id) {
+            return jsonError(c, {
+                status: 400,
+                message: 'ID is required',
+                code: 'VALIDATION_ERROR',
+            });
+        }
+
+        const sql = neon(c.env.NEON_DB);
+        const db = drizzle(sql);
+
+        // First query: Get the basic property data
+        const propertyResults = await db
+            .select({
+                // Property fields
+                id: property.id,
+                images: property.images,
+                slug: property.slug,
+                userId: property.userId,
+                codeId: property.codeId,
+                realStateAdviser: negotiationInfomation.realStateAdviser,
+                status: property.status,
+                createdAt: property.createdAt,
+                updatedAt: property.updatedAt,
+                isFeatured: property.isFeatured,
+                // General information fields
+                publicationTitle: generalInformation.publicationTitle,
+                code: generalInformation.code,
+                propertyType: generalInformation.propertyType,
+                footageBuilding: generalInformation.footageBuilding,
+                footageGround: generalInformation.footageGround,
+                description: generalInformation.description,
+                // Negotiation fields
+                price: negotiationInfomation.price,
+
+                state: locationInformation.state,
+                avenue: locationInformation.avenue,
+                city: locationInformation.city,
+                country: locationInformation.country,
+                howToGet: locationInformation.howToGet,
+                municipality: locationInformation.municipality,
+                referencePoint: locationInformation.referencePoint,
+                urbanization: locationInformation.urbanization,
+                street: locationInformation.street,
+                isClosedStreet: locationInformation.isClosedStreet,
+
+                NegotiationInfomation: negotiationInfomation, // Full object
+            })
+            .from(property)
+            .where(eq(property.id, params.id))
+            .leftJoin(generalInformation, eq(property.id, generalInformation.propertyId))
+            // .leftJoin(documentsInformation, eq(property.id, documentsInformation.propertyId))
+            .leftJoin(negotiationInfomation, eq(property.id, negotiationInfomation.propertyId))
+            .leftJoin(locationInformation, eq(property.id, locationInformation.propertyId))
+
+        if (propertyResults.length === 0) {
+            return jsonError(c, {
+                status: 404,
+                message: 'Property not found',
+                code: 'NOT_FOUND',
+            });
+        }
+
+        // Separate query for attributes
+        const attributesResults = await db
+            .select({
+                attributeId: attribute.id,
+                attributeLabel: attribute.label,
+                attributePlaceholder: attribute.placeholder,
+                attributeOptions: attribute.options,
+                attributeFormType: attribute.formType,
+                attributeValue: attributesOnProperties.value,
+                attributeValueType: attributesOnProperties.valueType,
+                attributeCreatedAt: attributesOnProperties.createdAt,
+            })
+            .from(attributesOnProperties)
+            .leftJoin(attribute, eq(attributesOnProperties.attribyteId, attribute.id)) // Keep the typo
+            .where(eq(attributesOnProperties.propertyId, params.id));
+
+        // Separate query for distributions
+        const distributionsResults = await db
+            .select({
+                distributionId: distribution.id,
+                distributionTitle: distribution.title,
+                distributionDescription: distribution.description,
+                distributionAdditionalInformation: distributionsOnProperties.additionalInformation,
+                distributionCreatedAt: distributionsOnProperties.createdAt,
+            })
+            .from(distributionsOnProperties)
+            .leftJoin(distribution, eq(distributionsOnProperties.distributionId, distribution.id))
+            .where(eq(distributionsOnProperties.propertyId, params.id));
+
+        // Separate query for equipments
+        const equipmentsResults = await db
+            .select({
+                equipmentId: equipment.id,
+                equipmentTitle: equipment.title,
+                equipmentDescription: equipment.description,
+                equipmentAdditionalInformation: equipmentsOnProperties.additionalInformation,
+                equipmentBrand: equipmentsOnProperties.brand,
+                equipmentCreatedAt: equipmentsOnProperties.createdAt,
+            })
+            .from(equipmentsOnProperties)
+            .leftJoin(equipment, eq(equipmentsOnProperties.equipmentId, equipment.id))
+            .where(eq(equipmentsOnProperties.propertyId, params.id));
+
+        // Separate query for utilities
+        const utilitiesResults = await db
+            .select({
+                utilityId: utility.id,
+                utilityTitle: utility.title,
+                utilityDescription: utility.description,
+                utilityAdditionalInformation: utilitiesOnProperties.additionalInformation,
+                utilityCreatedAt: utilitiesOnProperties.createdAt,
+            })
+            .from(utilitiesOnProperties)
+            .leftJoin(utility, eq(utilitiesOnProperties.utilityId, utility.id))
+            .where(eq(utilitiesOnProperties.propertyId, params.id));
+
+        // Separate query for adjacencies
+        const adjacenciesResults = await db
+            .select({
+                adjacencyId: adjacency.id,
+                adjacencyTitle: adjacency.title,
+                adjacencyDescription: adjacency.description,
+                adjacencyCreatedAt: adjacenciesOnProperties.createdAt,
+            })
+            .from(adjacenciesOnProperties)
+            .leftJoin(adjacency, eq(adjacenciesOnProperties.adjacencyId, adjacency.id))
+            .where(eq(adjacenciesOnProperties.propertyId, params.id));
+
+        // Transform the results into the expected format
+        const attributes = attributesResults.map(row => ({
+            attributeId: row.attributeId,
+            value: row.attributeValue,
+            valueType: row.attributeValueType,
+            createdAt: row.attributeCreatedAt,
+            attribute: {
+                id: row.attributeId,
+                label: row.attributeLabel,
+                placeholder: row.attributePlaceholder,
+                options: row.attributeOptions,
+                formType: row.attributeFormType,
+            }
+        }));
+
+        const distributions = distributionsResults.map(row => ({
+            distributionId: row.distributionId,
+            additionalInformation: row.distributionAdditionalInformation,
+            createdAt: row.distributionCreatedAt,
+            distribution: {
+                id: row.distributionId,
+                title: row.distributionTitle,
+                description: row.distributionDescription,
+            }
+        }));
+
+        const equipments = equipmentsResults.map(row => ({
+            equipmentId: row.equipmentId,
+            additionalInformation: row.equipmentAdditionalInformation,
+            brand: row.equipmentBrand,
+            createdAt: row.equipmentCreatedAt,
+            equipment: {
+                id: row.equipmentId,
+                title: row.equipmentTitle,
+                description: row.equipmentDescription,
+            }
+        }));
+
+        const utilities = utilitiesResults.map(row => ({
+            utilityId: row.utilityId,
+            additionalInformation: row.utilityAdditionalInformation,
+            createdAt: row.utilityCreatedAt,
+            utility: {
+                id: row.utilityId,
+                title: row.utilityTitle,
+                description: row.utilityDescription,
+            }
+        }));
+
+        const adjacencies = adjacenciesResults.map(row => ({
+            adjacencyId: row.adjacencyId,
+            createdAt: row.adjacencyCreatedAt,
+            adjacency: {
+                id: row.adjacencyId,
+                title: row.adjacencyTitle,
+                description: row.adjacencyDescription,
+            }
+        }));
+
+        const {
+            NegotiationInfomation,
+            ...rest
+        } = propertyResults[0]
+
+        const propertyData = {
+            ...rest,
+            negotiationInformation: NegotiationInfomation,
+            attributes,
+            equipments,
+            distributions,
+            utilities,
+            adjacencies,
+        };
+
+        return c.json({data: propertyData});
+    } catch (error) {
+        console.error('Error fetching properties:', error);
+        return jsonError(c, {
+            status: 500,
+            message: 'Failed to fetch property',
+            code: 'DATABASE_ERROR',
+            details: error instanceof Error ? error.message : 'Unknown error',
+        });
+    }
+});
 // POST a new property entry
 properties.post('/', async (c) => {
     try {
