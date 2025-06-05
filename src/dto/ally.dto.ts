@@ -8,4 +8,4 @@ export const AllyDto = z.object({
     status: z.string(),
 });
 
-export type OwnerDTO = z.infer<typeof AllyDto>;
+export type AllyDTO = z.infer<typeof AllyDto>;

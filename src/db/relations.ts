@@ -1,5 +1,11 @@
 import { relations } from "drizzle-orm/relations";
 import { property, documentsInformation, generalInformation, locationInformation, negotiationInfomation, user, passkey, propertyStatusEntry, service, subService, adjacency, adjacencyToProperty, attribute, attributeToProperty, cashFlowProperty, cashFlow, client, owner, externalPerson, equipment, equipmentToProperty, distribution, propertyToDistribution, propertyToUtility, utility, clientHistory, adjacenciesOnProperties, distributionsOnProperties, utilitiesOnProperties, attributesOnProperties, equipmentsOnProperties } from "./schema";
+import {
+	cashFlowCurrency,
+	cashFlowPayment,
+	cashFlowSourceEntity,
+	cashFlowTransactionType
+} from "../../drizzle/migrations/schema";
 
 export const documentsInformationRelations = relations(documentsInformation, ({one}) => ({
 	property: one(property, {
@@ -109,27 +115,55 @@ export const attributeRelations = relations(attribute, ({many}) => ({
 	attributesOnProperties: many(attributesOnProperties),
 }));
 
-export const cashFlowRelations = relations(cashFlow, ({one}) => ({
+export const cashFlowRelations = relations(cashFlow, ({one, many}) => ({
 	cashFlowProperty: one(cashFlowProperty, {
-		fields: [cashFlow.propertyid],
+		fields: [cashFlow.property],
 		references: [cashFlowProperty.id]
 	}),
-	client: one(client, {
-		fields: [cashFlow.clientid],
-		references: [client.id]
-	}),
-	owner: one(owner, {
-		fields: [cashFlow.ownerid],
-		references: [owner.id]
-	}),
 	user: one(user, {
-		fields: [cashFlow.userId],
+		fields: [cashFlow.user],
 		references: [user.id]
 	}),
+	client: one(client, {
+		fields: [cashFlow.client],
+		references: [client.id]
+	}),
 	externalPerson: one(externalPerson, {
-		fields: [cashFlow.personid],
+		fields: [cashFlow.person],
 		references: [externalPerson.id]
 	}),
+	cashFlowPayments: many(cashFlowPayment),
+}));
+
+export const cashFlowPaymentRelations = relations(cashFlowPayment, ({one}) => ({
+	cashFlow: one(cashFlow, {
+		fields: [cashFlowPayment.cashflow],
+		references: [cashFlow.id]
+	}),
+	cashFlowCurrency: one(cashFlowCurrency, {
+		fields: [cashFlowPayment.currency],
+		references: [cashFlowCurrency.id]
+	}),
+	cashFlowSourceEntity: one(cashFlowSourceEntity, {
+		fields: [cashFlowPayment.entity],
+		references: [cashFlowSourceEntity.id]
+	}),
+	cashFlowTransactionType: one(cashFlowTransactionType, {
+		fields: [cashFlowPayment.transactionType],
+		references: [cashFlowTransactionType.id]
+	}),
+}));
+
+export const cashFlowCurrencyRelations = relations(cashFlowCurrency, ({many}) => ({
+	cashFlowPayments: many(cashFlowPayment),
+}));
+
+export const cashFlowSourceEntityRelations = relations(cashFlowSourceEntity, ({many}) => ({
+	cashFlowPayments: many(cashFlowPayment),
+}));
+
+export const cashFlowTransactionTypeRelations = relations(cashFlowTransactionType, ({many}) => ({
+	cashFlowPayments: many(cashFlowPayment),
 }));
 
 export const cashFlowPropertyRelations = relations(cashFlowProperty, ({many}) => ({

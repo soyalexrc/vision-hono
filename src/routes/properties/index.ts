@@ -15,7 +15,6 @@ import {
 import {PropertyDto, PropertyPatchDto} from "../../dto/property";
 import {v4 as uuid} from 'uuid';
 import jsonError from "../../utils/jsonError";
-import allies from "../allies";
 import {AllyDto} from "../../dto/ally.dto";
 
 export type Env = {

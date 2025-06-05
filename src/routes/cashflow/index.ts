@@ -38,6 +38,207 @@ cashflowRoutes.get('/', async (c) => {
     }
 });
 
+cashflowRoutes.get('/person', async (c) => {
+    try {
+        const sql = neon(c.env.NEON_DB);
+        const db = drizzle(sql);
+        const [data, countResult] = await Promise.all([
+            db.select().from(ally),
+            db.select({ count: count() }).from(ally)
+        ]);
+
+        const countRows = countResult[0]?.count || 0;
+
+        return c.json({
+            data,
+            count: countRows
+        });
+    } catch (error: any) {
+        console.log(error);
+        return jsonError(c, {
+            status: 500,
+            message: 'Failed to fetch allies',
+            code: 'DATABASE_ERROR',
+        });
+    }
+});
+
+cashflowRoutes.get('/property', async (c) => {
+    try {
+        const sql = neon(c.env.NEON_DB);
+        const db = drizzle(sql);
+        const [data, countResult] = await Promise.all([
+            db.select().from(ally),
+            db.select({ count: count() }).from(ally)
+        ]);
+
+        const countRows = countResult[0]?.count || 0;
+
+        return c.json({
+            data,
+            count: countRows
+        });
+    } catch (error: any) {
+        console.log(error);
+        return jsonError(c, {
+            status: 500,
+            message: 'Failed to fetch allies',
+            code: 'DATABASE_ERROR',
+        });
+    }
+});
+
+cashflowRoutes.get('/cashClosing', async (c) => {
+    try {
+        const sql = neon(c.env.NEON_DB);
+        const db = drizzle(sql);
+        const [data, countResult] = await Promise.all([
+            db.select().from(ally),
+            db.select({ count: count() }).from(ally)
+        ]);
+
+        const countRows = countResult[0]?.count || 0;
+
+        return c.json({
+            data,
+            count: countRows
+        });
+    } catch (error: any) {
+        console.log(error);
+        return jsonError(c, {
+            status: 500,
+            message: 'Failed to fetch allies',
+            code: 'DATABASE_ERROR',
+        });
+    }
+});
+
+cashflowRoutes.get('/temporalTransaction', async (c) => {
+    try {
+        const sql = neon(c.env.NEON_DB);
+        const db = drizzle(sql);
+        const [data, countResult] = await Promise.all([
+            db.select().from(ally),
+            db.select({ count: count() }).from(ally)
+        ]);
+
+        const countRows = countResult[0]?.count || 0;
+
+        return c.json({
+            data,
+            count: countRows
+        });
+    } catch (error: any) {
+        console.log(error);
+        return jsonError(c, {
+            status: 500,
+            message: 'Failed to fetch allies',
+            code: 'DATABASE_ERROR',
+        });
+    }
+});
+
+cashflowRoutes.get('/cashClosing', async (c) => {
+    try {
+        const sql = neon(c.env.NEON_DB);
+        const db = drizzle(sql);
+        const [data, countResult] = await Promise.all([
+            db.select().from(ally),
+            db.select({ count: count() }).from(ally)
+        ]);
+
+        const countRows = countResult[0]?.count || 0;
+
+        return c.json({
+            data,
+            count: countRows
+        });
+    } catch (error: any) {
+        console.log(error);
+        return jsonError(c, {
+            status: 500,
+            message: 'Failed to fetch allies',
+            code: 'DATABASE_ERROR',
+        });
+    }
+});
+
+cashflowRoutes.get('/total', async (c) => {
+    try {
+        const sql = neon(c.env.NEON_DB);
+        const db = drizzle(sql);
+        const [data, countResult] = await Promise.all([
+            db.select().from(ally),
+            db.select({ count: count() }).from(ally)
+        ]);
+
+        const countRows = countResult[0]?.count || 0;
+
+        return c.json({
+            data,
+            count: countRows
+        });
+    } catch (error: any) {
+        console.log(error);
+        return jsonError(c, {
+            status: 500,
+            message: 'Failed to fetch allies',
+            code: 'DATABASE_ERROR',
+        });
+    }
+});
+
+cashflowRoutes.get('/totalAvailable', async (c) => {
+    try {
+        const sql = neon(c.env.NEON_DB);
+        const db = drizzle(sql);
+        const [data, countResult] = await Promise.all([
+            db.select().from(ally),
+            db.select({ count: count() }).from(ally)
+        ]);
+
+        const countRows = countResult[0]?.count || 0;
+
+        return c.json({
+            data,
+            count: countRows
+        });
+    } catch (error: any) {
+        console.log(error);
+        return jsonError(c, {
+            status: 500,
+            message: 'Failed to fetch allies',
+            code: 'DATABASE_ERROR',
+        });
+    }
+});
+
+cashflowRoutes.get('/totalAvailableByEntity', async (c) => {
+    try {
+        const sql = neon(c.env.NEON_DB);
+        const db = drizzle(sql);
+        const [data, countResult] = await Promise.all([
+            db.select().from(ally),
+            db.select({ count: count() }).from(ally)
+        ]);
+
+        const countRows = countResult[0]?.count || 0;
+
+        return c.json({
+            data,
+            count: countRows
+        });
+    } catch (error: any) {
+        console.log(error);
+        return jsonError(c, {
+            status: 500,
+            message: 'Failed to fetch allies',
+            code: 'DATABASE_ERROR',
+        });
+    }
+});
+
+
 // GET BY ID /allies/:id
 cashflowRoutes.get('/:id', async (c) => {
     try {
@@ -94,6 +295,91 @@ cashflowRoutes.post('/', async (c) => {
         });
     }
 });
+
+cashflowRoutes.post('/person', async (c) => {
+    try {
+        const body = await c.req.json();
+        console.log(body);
+        const parsed = AllyDto.safeParse(body);
+
+        if (!parsed.success) {
+            return jsonError(c, {
+                message: 'Validation failed',
+                status: 400,
+                code: 'VALIDATION_ERROR',
+            });
+        }
+
+
+        const sql = neon(c.env.NEON_DB);
+        const db = drizzle(sql);
+        const newAlly = await db.insert(ally).values(parsed.data).returning();
+        return c.json({ data: newAlly[0] });
+    } catch (error: any) {
+        return jsonError(c, {
+            status: 500,
+            message: 'Failed to create ally',
+            code: 'DATABASE_ERROR',
+        });
+    }
+});
+
+cashflowRoutes.post('/property', async (c) => {
+    try {
+        const body = await c.req.json();
+        console.log(body);
+        const parsed = AllyDto.safeParse(body);
+
+        if (!parsed.success) {
+            return jsonError(c, {
+                message: 'Validation failed',
+                status: 400,
+                code: 'VALIDATION_ERROR',
+            });
+        }
+
+
+        const sql = neon(c.env.NEON_DB);
+        const db = drizzle(sql);
+        const newAlly = await db.insert(ally).values(parsed.data).returning();
+        return c.json({ data: newAlly[0] });
+    } catch (error: any) {
+        return jsonError(c, {
+            status: 500,
+            message: 'Failed to create ally',
+            code: 'DATABASE_ERROR',
+        });
+    }
+});
+
+cashflowRoutes.post('/temporalTransaction', async (c) => {
+    try {
+        const body = await c.req.json();
+        console.log(body);
+        const parsed = AllyDto.safeParse(body);
+
+        if (!parsed.success) {
+            return jsonError(c, {
+                message: 'Validation failed',
+                status: 400,
+                code: 'VALIDATION_ERROR',
+            });
+        }
+
+
+        const sql = neon(c.env.NEON_DB);
+        const db = drizzle(sql);
+        const newAlly = await db.insert(ally).values(parsed.data).returning();
+        return c.json({ data: newAlly[0] });
+    } catch (error: any) {
+        return jsonError(c, {
+            status: 500,
+            message: 'Failed to create ally',
+            code: 'DATABASE_ERROR',
+        });
+    }
+});
+
 
 // PATCH /allies/:allieId
 cashflowRoutes.patch('/:id', async (c) => {
