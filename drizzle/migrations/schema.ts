@@ -543,6 +543,25 @@ export const clientHistory = pgTable("ClientHistory", {
 		}),
 ]);
 
+export const property = pgTable("Property", {
+	id: text().primaryKey().notNull(),
+	userId: text().notNull(),
+	images: text().array(),
+	createdAt: timestamp({ precision: 3, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
+	furnishedAreas: text().array(),
+	slug: text().notNull(),
+	updatedAt: timestamp({ precision: 3, mode: 'string' }).notNull(),
+	isFeatured: boolean().default(false),
+	active: boolean().default(false).notNull(),
+	status: varchar({ length: 20 }),
+	documents: text().array(),
+	updatedby: jsonb(),
+	createdby: jsonb(),
+	codeId: integer().default(sql`nextval('property_codeid_seq'::regclass)`).notNull(),
+}, (table) => [
+	uniqueIndex("Property_slug_key").using("btree", table.slug.asc().nullsLast().op("text_ops")),
+]);
+
 export const client = pgTable("Client", {
 	id: serial().primaryKey().notNull(),
 	name: text().notNull(),
@@ -603,26 +622,8 @@ export const client = pgTable("Client", {
 	updatedat: timestamp({ mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
 	createdby: jsonb(),
 	updatedby: jsonb(),
+	assignedto: jsonb(),
 });
-
-export const property = pgTable("Property", {
-	id: text().primaryKey().notNull(),
-	userId: text().notNull(),
-	images: text().array(),
-	createdAt: timestamp({ precision: 3, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
-	furnishedAreas: text().array(),
-	slug: text().notNull(),
-	updatedAt: timestamp({ precision: 3, mode: 'string' }).notNull(),
-	isFeatured: boolean().default(false),
-	active: boolean().default(false).notNull(),
-	status: varchar({ length: 20 }),
-	documents: text().array(),
-	updatedby: jsonb(),
-	createdby: jsonb(),
-	codeId: integer().default(sql`nextval('property_codeid_seq'::regclass)`).notNull(),
-}, (table) => [
-	uniqueIndex("Property_slug_key").using("btree", table.slug.asc().nullsLast().op("text_ops")),
-]);
 
 export const adjacenciesOnProperties = pgTable("AdjacenciesOnProperties", {
 	propertyId: text().notNull(),

@@ -5,6 +5,7 @@ export const ClientDto = z.object({
     changes: z.any().optional(),
     updatedby: z.any().optional(),
     createdby: z.any().optional(),
+    assignedto: z.any().optional(),
     usageProperty: z.string().optional(),
     referrer: z.string().optional(),
     contactFrom: z.string(),

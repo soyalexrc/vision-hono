@@ -640,6 +640,7 @@ export const client = pgTable("Client", {
 	updatedat: timestamp({ mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
 	createdby: jsonb(),
 	updatedby: jsonb(),
+	assignedto: jsonb(),
 });
 
 export const adjacenciesOnProperties = pgTable("AdjacenciesOnProperties", {
