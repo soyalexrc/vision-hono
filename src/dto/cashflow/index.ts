@@ -1,18 +1,22 @@
 import { z } from 'zod';
+import {CashFlowPaymentDto} from "./payment";
 
 export const CashFlowDto = z.object({
     id: z.number().int().optional(),
-    property_id: z.number().int().nullable().optional(),
-    client_id: z.number().int().nullable().optional(),
-    user_id: z.number().int().optional(),
-    owner_id: z.number().int().optional(),
-    cashflow_person_id: z.number().int().optional(),
+    property: z.number().nullable().optional(),
+    client: z.number().nullable().optional(),
+    user: z.number(),
+    owner: z.number().nullable().optional(),
+    person: z.number().nullable().optional(),
     date: z.string(),
-    internalProperty: z.string(),
-    person: z.string().optional(),
     month: z.string(),
     location: z.string().optional(),
-    isTemporalTransaction: z.boolean().default(false),
+    attachments: z.any().optional(),
+    createdBy: z.any(),
+    updatedby: z.any(),
+    temporalTransactionId: z.number().nullable().optional(),
+    isTemporalTransaction: z.boolean().optional().default(false),
+    payments: z.array(CashFlowPaymentDto),
 });
 
 export type CashFlowDTO = z.infer<typeof CashFlowDto>;

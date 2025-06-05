@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import allies from "./routes/allies";
 import externalAdvisers from "./routes/external-advisers";
 import categories from "./routes/categories";
+import cashflow from "./routes/cashflow";
 import auth from "./routes/auth";
 import clients from "./routes/client";
 import config from "./routes/app-config";
@@ -45,6 +46,7 @@ const protectedRoutes = [
     'owner',
     'client',
     'ally',
+    'cashflow',
     'config',
     'external-adviser',
     'user',
@@ -73,6 +75,7 @@ app.route('equipment', equipments);
 app.route('distribution', distributions);
 app.route('property', properties);
 app.route('service', services);
+app.route('cashflow', cashflow);
 app.route('contactForm', contactForms);
 app.route('workWithUsForm', workWithUsForms);
 app.route('r2', r2)

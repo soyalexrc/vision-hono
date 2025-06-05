@@ -170,7 +170,7 @@ export const attribute = pgTable("Attribute", {
 export const cashFlowProperty = pgTable("CashFlowProperty", {
 	id: serial().primaryKey().notNull(),
 	name: text().notNull(),
-	locatiuon: text().notNull(),
+	location: text().notNull(),
 });
 
 export const cashFlow = pgTable("CashFlow", {
@@ -214,7 +214,7 @@ export const cashFlow = pgTable("CashFlow", {
 export const cashFlowPayment = pgTable("CashFlowPayment", {
 	id: serial().primaryKey().notNull(),
 	cashflow: integer().notNull(),
-	canon: boolean(),
+	canon: doublePrecision(),
 	contract: boolean(),
 	guarantee: boolean(),
 	serviceType: text(),

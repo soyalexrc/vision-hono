@@ -2,22 +2,22 @@ import { z } from 'zod';
 
 export const CashFlowPaymentDto = z.object({
     id: z.number().int().optional(),
-    cashflow: z.number(),
-    canon: z.boolean().optional(),
+    cashflow: z.number().optional(),
+    canon: z.number().optional(),
     contract: z.boolean().optional(),
     guarantee: z.boolean().optional(),
     serviceType: z.string().optional(),
     reason: z.string(),
     service: z.string().optional(),
     taxPayer: z.string().optional(),
-    amount: z.string(),
+    amount: z.number(),
     currency: z.number(),
     wayToPay: z.number(),
     transactionType: z.number(),
-    totalDue: z.string().optional(),
-    incomeByThird: z.string().optional(),
+    totalDue: z.number().optional(),
+    incomeByThird: z.number().optional(),
     entity: z.number(),
-    pendingToCollect: z.string(),
+    pendingToCollect: z.number(),
     observation: z.string().optional(),
 });
 

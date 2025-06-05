@@ -1,10 +1,13 @@
-import { Hono } from 'hono';
+import {Hono} from 'hono';
 import jsonError from '../../utils/jsonError';
-import {neon} from "@neondatabase/serverless";
+import {neon,} from "@neondatabase/serverless";
 import {drizzle} from "drizzle-orm/neon-http";
-import {ally, cashFlow} from "../../db/schema";
-import {count, eq, inArray} from "drizzle-orm";
+import {ally, cashFlow, cashFlowPayment, cashFlowProperty, externalPerson} from "../../db/schema";
+import {count, eq, inArray, sql as rawSql} from "drizzle-orm";
 import {AllyDto} from "../../dto/ally.dto";
+import {CashFlowPersonDto} from "../../dto/cashflow/person";
+import {CashFlowPropertyDto} from "../../dto/cashflow/property";
+import {CashFlowDto} from "../../dto/cashflow";
 
 export type Env = {
     NEON_DB: string;
@@ -17,23 +20,22 @@ cashflowRoutes.get('/', async (c) => {
     try {
         const sql = neon(c.env.NEON_DB);
         const db = drizzle(sql);
-        const [data, countResult] = await Promise.all([
-            db.select().from(ally),
-            db.select({ count: count() }).from(ally)
-        ]);
-
-        const countRows = countResult[0]?.count || 0;
-
-        return c.json({
-            data,
-            count: countRows
-        });
+        const data = await db.execute(rawSql`
+            SELECT cf.*,
+                   COALESCE(JSON_AGG(cfp.*) FILTER(WHERE cfp.id IS NOT NULL), '[]'::json) as payments,
+                   COALESCE(SUM(cfp.amount), 0) as total_amount
+            FROM ${cashFlow} cf
+                     LEFT JOIN ${cashFlowPayment} cfp ON cf.id = cfp.cashflow
+            GROUP BY cf.id
+        `);
+        return c.json({data: data.rows});
     } catch (error: any) {
         console.log(error);
         return jsonError(c, {
             status: 500,
             message: 'Failed to fetch allies',
             code: 'DATABASE_ERROR',
+            details: error.message || 'An unexpected error occurred',
         });
     }
 });
@@ -42,17 +44,8 @@ cashflowRoutes.get('/person', async (c) => {
     try {
         const sql = neon(c.env.NEON_DB);
         const db = drizzle(sql);
-        const [data, countResult] = await Promise.all([
-            db.select().from(ally),
-            db.select({ count: count() }).from(ally)
-        ]);
-
-        const countRows = countResult[0]?.count || 0;
-
-        return c.json({
-            data,
-            count: countRows
-        });
+        const data = await db.select().from(externalPerson)
+        return c.json({data});
     } catch (error: any) {
         console.log(error);
         return jsonError(c, {
@@ -67,17 +60,8 @@ cashflowRoutes.get('/property', async (c) => {
     try {
         const sql = neon(c.env.NEON_DB);
         const db = drizzle(sql);
-        const [data, countResult] = await Promise.all([
-            db.select().from(ally),
-            db.select({ count: count() }).from(ally)
-        ]);
-
-        const countRows = countResult[0]?.count || 0;
-
-        return c.json({
-            data,
-            count: countRows
-        });
+        const data = await db.select().from(cashFlowProperty)
+        return c.json({data});
     } catch (error: any) {
         console.log(error);
         return jsonError(c, {
@@ -94,7 +78,7 @@ cashflowRoutes.get('/cashClosing', async (c) => {
         const db = drizzle(sql);
         const [data, countResult] = await Promise.all([
             db.select().from(ally),
-            db.select({ count: count() }).from(ally)
+            db.select({count: count()}).from(ally)
         ]);
 
         const countRows = countResult[0]?.count || 0;
@@ -119,7 +103,7 @@ cashflowRoutes.get('/temporalTransaction', async (c) => {
         const db = drizzle(sql);
         const [data, countResult] = await Promise.all([
             db.select().from(ally),
-            db.select({ count: count() }).from(ally)
+            db.select({count: count()}).from(ally)
         ]);
 
         const countRows = countResult[0]?.count || 0;
@@ -144,7 +128,7 @@ cashflowRoutes.get('/cashClosing', async (c) => {
         const db = drizzle(sql);
         const [data, countResult] = await Promise.all([
             db.select().from(ally),
-            db.select({ count: count() }).from(ally)
+            db.select({count: count()}).from(ally)
         ]);
 
         const countRows = countResult[0]?.count || 0;
@@ -169,7 +153,7 @@ cashflowRoutes.get('/total', async (c) => {
         const db = drizzle(sql);
         const [data, countResult] = await Promise.all([
             db.select().from(ally),
-            db.select({ count: count() }).from(ally)
+            db.select({count: count()}).from(ally)
         ]);
 
         const countRows = countResult[0]?.count || 0;
@@ -194,7 +178,7 @@ cashflowRoutes.get('/totalAvailable', async (c) => {
         const db = drizzle(sql);
         const [data, countResult] = await Promise.all([
             db.select().from(ally),
-            db.select({ count: count() }).from(ally)
+            db.select({count: count()}).from(ally)
         ]);
 
         const countRows = countResult[0]?.count || 0;
@@ -219,7 +203,7 @@ cashflowRoutes.get('/totalAvailableByEntity', async (c) => {
         const db = drizzle(sql);
         const [data, countResult] = await Promise.all([
             db.select().from(ally),
-            db.select({ count: count() }).from(ally)
+            db.select({count: count()}).from(ally)
         ]);
 
         const countRows = countResult[0]?.count || 0;
@@ -272,21 +256,35 @@ cashflowRoutes.post('/', async (c) => {
     try {
         const body = await c.req.json();
         console.log(body);
-        const parsed = AllyDto.safeParse(body);
+        const parsed = CashFlowDto.safeParse(body);
 
         if (!parsed.success) {
             return jsonError(c, {
                 message: 'Validation failed',
                 status: 400,
                 code: 'VALIDATION_ERROR',
+                details: parsed.error.errors,
             });
         }
 
+        const {payments, ...rest} = parsed.data;
 
         const sql = neon(c.env.NEON_DB);
         const db = drizzle(sql);
-        const newAlly = await db.insert(ally).values(parsed.data).returning();
-        return c.json({ data: newAlly[0] });
+        const [newCashFlow] = await db.insert(cashFlow).values({
+            ...rest,
+            createdBy: rest.createdBy,
+        }).returning();
+
+        if (payments && payments.length > 0 && newCashFlow) {
+            const paymentData = payments.map((payment: any) => ({
+                ...payment,
+                cashflow: newCashFlow.id, // Assuming cashFlowId is the foreign key
+            }));
+            await db.insert(cashFlowPayment).values(paymentData);
+        }
+
+        return c.json({message: 'Informacion registrada correctamente'});
     } catch (error: any) {
         return jsonError(c, {
             status: 500,
@@ -300,7 +298,7 @@ cashflowRoutes.post('/person', async (c) => {
     try {
         const body = await c.req.json();
         console.log(body);
-        const parsed = AllyDto.safeParse(body);
+        const parsed = CashFlowPersonDto.safeParse(body);
 
         if (!parsed.success) {
             return jsonError(c, {
@@ -310,11 +308,10 @@ cashflowRoutes.post('/person', async (c) => {
             });
         }
 
-
         const sql = neon(c.env.NEON_DB);
         const db = drizzle(sql);
-        const newAlly = await db.insert(ally).values(parsed.data).returning();
-        return c.json({ data: newAlly[0] });
+        const newAlly = await db.insert(externalPerson).values(parsed.data).returning();
+        return c.json({data: newAlly[0]});
     } catch (error: any) {
         return jsonError(c, {
             status: 500,
@@ -328,7 +325,7 @@ cashflowRoutes.post('/property', async (c) => {
     try {
         const body = await c.req.json();
         console.log(body);
-        const parsed = AllyDto.safeParse(body);
+        const parsed = CashFlowPropertyDto.safeParse(body);
 
         if (!parsed.success) {
             return jsonError(c, {
@@ -341,8 +338,8 @@ cashflowRoutes.post('/property', async (c) => {
 
         const sql = neon(c.env.NEON_DB);
         const db = drizzle(sql);
-        const newAlly = await db.insert(ally).values(parsed.data).returning();
-        return c.json({ data: newAlly[0] });
+        const newAlly = await db.insert(cashFlowProperty).values(parsed.data).returning();
+        return c.json({data: newAlly[0]});
     } catch (error: any) {
         return jsonError(c, {
             status: 500,
@@ -370,7 +367,7 @@ cashflowRoutes.post('/temporalTransaction', async (c) => {
         const sql = neon(c.env.NEON_DB);
         const db = drizzle(sql);
         const newAlly = await db.insert(ally).values(parsed.data).returning();
-        return c.json({ data: newAlly[0] });
+        return c.json({data: newAlly[0]});
     } catch (error: any) {
         return jsonError(c, {
             status: 500,
@@ -407,7 +404,7 @@ cashflowRoutes.patch('/:id', async (c) => {
         const sql = neon(c.env.NEON_DB);
         const db = drizzle(sql);
         const updatedAlly = await db.update(ally).set(parsed.data).where(eq(ally.id, Number(id))).returning();
-        return c.json({ data: updatedAlly[0] });
+        return c.json({data: updatedAlly[0]});
     } catch (error: any) {
         return jsonError(c, {
             status: 500,
@@ -445,7 +442,7 @@ cashflowRoutes.delete('/:id', async (c) => {
 
         const result = await db
             .update(ally)
-            .set({ status: 'deleted' })
+            .set({status: 'deleted'})
             .where(eq(ally.id, Number(id)))
             .returning();
 
@@ -481,7 +478,7 @@ cashflowRoutes.post('/remove-many', async (c) => {
         const db = drizzle(sql);
 
         const foundAllies = await db
-            .select({ id: ally.id })
+            .select({id: ally.id})
             .from(ally)
             .where(inArray(ally.id, ids));
 
@@ -497,7 +494,7 @@ cashflowRoutes.post('/remove-many', async (c) => {
 
         const result = await db
             .update(ally)
-            .set({ status: 'deleted' })
+            .set({status: 'deleted'})
             .where(inArray(ally.id, foundIds))
             .returning();
 
@@ -546,7 +543,7 @@ cashflowRoutes.post('/restore', async (c) => {
 
         const result = await db
             .update(ally)
-            .set({ status: 'active' })
+            .set({status: 'active'})
             .where(eq(ally.id, Number(id)))
             .returning();
 
