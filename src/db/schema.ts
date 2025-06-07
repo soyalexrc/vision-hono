@@ -44,6 +44,7 @@ export const cashFlowCurrency = pgTable("CashFlowCurrency", {
 	id: serial().primaryKey().notNull(),
 	name: text().notNull(),
 	symbol: text().notNull(),
+	code: text().notNull(),
 });
 
 export const cashFlowSourceEntity = pgTable("CashFlowSourceEntity", {

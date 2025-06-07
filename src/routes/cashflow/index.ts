@@ -2,7 +2,16 @@ import {Hono} from 'hono';
 import jsonError from '../../utils/jsonError';
 import {neon,} from "@neondatabase/serverless";
 import {drizzle} from "drizzle-orm/neon-http";
-import {ally, cashFlow, cashFlowPayment, cashFlowProperty, externalPerson} from "../../db/schema";
+import {
+    ally,
+    cashFlow,
+    cashFlowCurrency,
+    cashFlowPayment,
+    cashFlowProperty, cashFlowSourceEntity, cashFlowTransactionType, cashFlowWayToPay,
+    client,
+    externalPerson,
+    user
+} from "../../db/schema";
 import {count, eq, inArray, sql as rawSql} from "drizzle-orm";
 import {AllyDto} from "../../dto/ally.dto";
 import {CashFlowPersonDto} from "../../dto/cashflow/person";
@@ -22,12 +31,132 @@ cashflowRoutes.get('/', async (c) => {
         const db = drizzle(sql);
         const data = await db.execute(rawSql`
             SELECT cf.*,
-                   COALESCE(JSON_AGG(cfp.*) FILTER(WHERE cfp.id IS NOT NULL), '[]'::json) as payments,
-                   COALESCE(SUM(cfp.amount), 0) as total_amount
+                   COALESCE(
+                           JSON_AGG(
+                                   JSON_BUILD_OBJECT(
+                                           'id', cfp.id,
+                                           'cashflow', cfp.cashflow,
+                                           'canon', cfp.canon,
+                                           'contract', cfp.contract,
+                                           'guarantee', cfp.guarantee,
+                                           'serviceType', cfp."serviceType",
+                                           'reason', cfp.reason,
+                                           'service', cfp.service,
+                                           'taxPayer', cfp."taxPayer",
+                                           'amount', cfp.amount,
+                                           'currency', cfp.currency,
+                                           'wayToPay', cfp."wayToPay",
+                                           'transactionType', cfp."transactionType",
+                                           'totalDue', cfp."totalDue",
+                                           'incomeByThird', cfp."incomeByThird",
+                                           'entity', cfp.entity,
+                                           'pendingToCollect', cfp."pendingToCollect",
+                                           'observation', cfp.observation,
+                                       -- Currency data
+                                           'currencyData', CASE
+                                                               WHEN cfp.currency IS NOT NULL THEN
+                                                                   JSON_BUILD_OBJECT(
+                                                                           'id', curr.id,
+                                                                           'name', curr.name,
+                                                                           'code', curr.code
+                                                                       -- Add other currency fields you need
+                                                                   )
+                                                               ELSE NULL
+                                               END,
+                                       -- Entity data
+                                           'entityData', CASE
+                                                             WHEN cfp.entity IS NOT NULL THEN
+                                                                 JSON_BUILD_OBJECT(
+                                                                         'id', ent.id,
+                                                                         'name', ent.name
+                                                                     -- Add other entity fields you need
+                                                                 )
+                                                             ELSE NULL
+                                               END,
+                                       -- Way to Pay data
+                                           'wayToPayData', CASE
+                                                             WHEN cfp."wayToPay" IS NOT NULL THEN
+                                                                 JSON_BUILD_OBJECT(
+                                                                         'id', wtp.id,
+                                                                         'name', wtp.name
+                                                                     -- Add other entity fields you need
+                                                                 )
+                                                             ELSE NULL
+                                               END,
+                                       -- Transaction Type data
+                                           'transactionTypeData', CASE
+                                                                      WHEN cfp."transactionType" IS NOT NULL THEN
+                                                                          JSON_BUILD_OBJECT(
+                                                                                  'id', tt.id,
+                                                                                  'name', tt.name
+                                                                              -- Add other transaction type fields you need
+                                                                          )
+                                                                      ELSE NULL
+                                               END
+                                   )
+                           ) FILTER(WHERE cfp.id IS NOT NULL),
+                           '[]'::json
+                   ) as payments,
+                   (
+                       SELECT COALESCE(JSON_AGG(currency_total), '[]'::json)
+                       FROM (
+                                SELECT
+                                    JSON_BUILD_OBJECT(
+                                            'currency', cfp2.currency,
+                                            'currency_code', curr2.code,
+                                            'total_amount', SUM(cfp2.amount)
+                                    ) as currency_total
+                                FROM ${cashFlowPayment} cfp2
+                                         LEFT JOIN ${cashFlowCurrency} curr2 ON cfp2.currency = curr2.id
+                                WHERE cfp2.cashflow = cf.id
+                                GROUP BY cfp2.currency, curr2.code
+                            ) currency_totals
+                   ) as total_amount,
+                -- Property data
+                   CASE
+                       WHEN cf.property IS NOT NULL THEN
+                           JSON_BUILD_OBJECT(
+                                   'id', prop.id,
+                                   'name', prop.name,
+                                   'location', prop.location
+                               -- Add other property fields you need
+                           )
+                       ELSE NULL
+                       END as propertyData,
+                   -- Client data
+                   CASE
+                       WHEN cf.client IS NOT NULL THEN
+                           JSON_BUILD_OBJECT(
+                                   'id', client.id,
+                                   'name', client.name
+                               -- Add other client fields you need
+                           )
+                       ELSE NULL
+                       END as clientData,
+                   -- External person data
+                   CASE
+                       WHEN cf.person IS NOT NULL THEN
+                           JSON_BUILD_OBJECT(
+                                   'id', ep.id,
+                                   'name', ep.name,
+                                   'source', ep.source
+                               -- Add other external person fields you need
+                           )
+                       ELSE NULL
+                       END as personData
             FROM ${cashFlow} cf
                      LEFT JOIN ${cashFlowPayment} cfp ON cf.id = cfp.cashflow
-            GROUP BY cf.id
+                     LEFT JOIN ${cashFlowProperty} prop ON cf.property = prop.id
+                     LEFT JOIN ${client} client ON cf.client = client.id
+                     LEFT JOIN ${user} u ON cf.user = u.id
+                     LEFT JOIN ${externalPerson} ep ON cf.person = ep.id
+                     LEFT JOIN ${cashFlowCurrency} curr ON cfp.currency = curr.id
+                     LEFT JOIN ${cashFlowSourceEntity} ent ON cfp.entity = ent.id
+                     LEFT JOIN ${cashFlowTransactionType} tt ON cfp."transactionType" = tt.id
+                     LEFT JOIN ${cashFlowWayToPay} wtp ON cfp."wayToPay" = wtp.id
+            GROUP BY cf.id, prop.id, client.id, u.id, ep.id
         `);
+
         return c.json({data: data.rows});
     } catch (error: any) {
         console.log(error);
