@@ -27,7 +27,7 @@ const app = new Hono<{ Bindings: CloudflareBindings }>();
 
 // 1. CORS MUST come first - before any other middleware
 app.use('*', cors({
-    origin: ['http://localhost:8083', 'https://admin.visioninmobiliaria.com.ve'],
+    origin: ['http://localhost:8083', 'http://localhost:3000', 'https://visioninmobiliaria.com.ve', 'https://admin.visioninmobiliaria.com.ve'],
     allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
     credentials: true,
@@ -59,7 +59,7 @@ for (const route of protectedRoutes) {
     app.use(`/${route}`, authMiddleware) // Also protect the base route
 }
 
-app.use('*', debugMiddleware);
+// app.use('*', debugMiddleware);
 
 app.route('ally', allies);
 app.route('config', config);
