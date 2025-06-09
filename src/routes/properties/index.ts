@@ -115,7 +115,7 @@ properties.get('/queried', async (c) => {
         const page = Number(params.pagina) || 1;
         const size = Number(params.cantidad) || 10;
         const operationType = params['tipo-de-operacion'] || 'todos';
-        const status = params.status || 'true';
+        const status = params.status || 'active';
         const propertyType = params['tipo-de-inmueble'] || 'todos';
         const code = params.codigo;
         const state = params.estado;
@@ -164,7 +164,7 @@ properties.get('/queried', async (c) => {
         }
 
         if (status && status !== 'todos') {
-            whereConditions.push(eq(property.active, status === 'true'));
+            whereConditions.push(eq(property.status, status));
         }
 
         if (propertyType && propertyType !== 'todos') {
@@ -705,10 +705,10 @@ properties.get('/detail/slug/:slug', async (c) => {
                 id: property.id,
                 images: property.images,
                 slug: property.slug,
+                status: property.status,
                 userId: property.userId,
                 codeId: property.codeId,
                 realStateAdviser: negotiationInfomation.realStateAdviser,
-                status: property.status,
                 createdAt: property.createdAt,
                 updatedAt: property.updatedAt,
                 isFeatured: property.isFeatured,
@@ -951,7 +951,7 @@ properties.post('/', async (c) => {
             }),
             isFeatured: parsed.data.isFeatured,
             active: parsed.data.active,
-            status: parsed.data.status,
+            status: parsed.data.status || 'inactive',
             updatedAt: rawSql`now()`,
             createdby: parsed.data.createdby,
         }).returning();
