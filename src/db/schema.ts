@@ -217,7 +217,7 @@ export const cashFlow = pgTable("CashFlow", {
 export const cashFlowPayment = pgTable("CashFlowPayment", {
 	id: serial().primaryKey().notNull(),
 	cashflow: integer().notNull(),
-	canon: doublePrecision(),
+	canon: boolean(),
 	contract: boolean(),
 	guarantee: boolean(),
 	serviceType: text(),

@@ -409,7 +409,7 @@ export const cashFlow = pgTable("CashFlow", {
 	attachments: text().array(),
 	property: integer(),
 	updatedby: jsonb(),
-	cretedAt: timestamp({ mode: 'string' }).defaultNow(),
+	createdAt: timestamp({ mode: 'string' }).defaultNow(),
 	updatedAt: timestamp({ mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
 }, (table) => [
 	foreignKey({
@@ -609,7 +609,6 @@ export const client = pgTable("Client", {
 export const cashFlowPayment = pgTable("CashFlowPayment", {
 	id: serial().primaryKey().notNull(),
 	cashflow: integer().notNull(),
-	canon: doublePrecision(),
 	contract: boolean(),
 	guarantee: boolean(),
 	serviceType: text(),
@@ -625,6 +624,7 @@ export const cashFlowPayment = pgTable("CashFlowPayment", {
 	entity: integer(),
 	pendingToCollect: doublePrecision(),
 	observation: text(),
+	canon: boolean(),
 }, (table) => [
 	foreignKey({
 			columns: [table.cashflow],
