@@ -71,6 +71,8 @@ export const categories = pgTable("Categories", {
 	titlePlural: text().notNull(),
 	isFeatured: boolean().notNull(),
 	image: text(),
+	order: integer(),
+	enabled: boolean().default(true),
 });
 
 export const contactForm = pgTable("ContactForm", {
@@ -435,6 +437,8 @@ export const propertyStatusEntry = pgTable("PropertyStatusEntry", {
 export const service = pgTable("Service", {
 	title: text().notNull(),
 	id: serial().primaryKey().notNull(),
+	order: integer(),
+	enabled: boolean().default(true),
 }, (table) => [
 	uniqueIndex("Service_title_key").using("btree", table.title.asc().nullsLast().op("text_ops")),
 ]);

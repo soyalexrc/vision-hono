@@ -1,4 +1,4 @@
-import { pgTable, text, serial, boolean, timestamp, varchar, integer, uniqueIndex, foreignKey, index, jsonb, numeric, doublePrecision, primaryKey, pgSequence, pgEnum } from "drizzle-orm/pg-core"
+import { pgTable, text, serial, boolean, integer, timestamp, varchar, uniqueIndex, foreignKey, index, jsonb, numeric, doublePrecision, primaryKey, pgSequence, pgEnum } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
 export const formTypes = pgEnum("FormTypes", ['check', 'text', 'select'])
@@ -54,6 +54,8 @@ export const categories = pgTable("Categories", {
 	titlePlural: text().notNull(),
 	isFeatured: boolean().notNull(),
 	image: text(),
+	order: integer(),
+	enabled: boolean().default(true),
 });
 
 export const contactForm = pgTable("ContactForm", {
@@ -332,13 +334,6 @@ export const propertyStatusEntry = pgTable("PropertyStatusEntry", {
 		}).onUpdate("cascade").onDelete("restrict"),
 ]);
 
-export const service = pgTable("Service", {
-	title: text().notNull(),
-	id: serial().primaryKey().notNull(),
-}, (table) => [
-	uniqueIndex("Service_title_key").using("btree", table.title.asc().nullsLast().op("text_ops")),
-]);
-
 export const subService = pgTable("SubService", {
 	service: text().notNull(),
 	id: serial().primaryKey().notNull(),
@@ -432,6 +427,15 @@ export const cashFlow = pgTable("CashFlow", {
 			foreignColumns: [externalPerson.id],
 			name: "cashflow_person_fk"
 		}),
+]);
+
+export const service = pgTable("Service", {
+	title: text().notNull(),
+	id: serial().primaryKey().notNull(),
+	order: integer(),
+	enabled: boolean().default(true),
+}, (table) => [
+	uniqueIndex("Service_title_key").using("btree", table.title.asc().nullsLast().op("text_ops")),
 ]);
 
 export const equipmentToProperty = pgTable("_EquipmentToProperty", {
