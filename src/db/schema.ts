@@ -189,6 +189,8 @@ export const cashFlow = pgTable("CashFlow", {
 	attachments: text().array(),
 	property: integer(),
 	updatedby: jsonb(),
+	createdAt: timestamp({ mode: 'string' }).defaultNow(),
+	updatedAt: timestamp({ mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
 }, (table) => [
 	foreignKey({
 		columns: [table.property],

@@ -27,6 +27,7 @@ export const cashFlowCurrency = pgTable("CashFlowCurrency", {
 	id: serial().primaryKey().notNull(),
 	name: text().notNull(),
 	symbol: text().notNull(),
+	code: text().notNull(),
 });
 
 export const cashFlowWayToPay = pgTable("CashFlowWayToPay", {
@@ -408,6 +409,8 @@ export const cashFlow = pgTable("CashFlow", {
 	attachments: text().array(),
 	property: integer(),
 	updatedby: jsonb(),
+	cretedAt: timestamp({ mode: 'string' }).defaultNow(),
+	updatedAt: timestamp({ mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
 }, (table) => [
 	foreignKey({
 			columns: [table.property],
