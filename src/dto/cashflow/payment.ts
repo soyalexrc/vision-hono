@@ -3,7 +3,7 @@ import { z } from 'zod';
 export const CashFlowPaymentDto = z.object({
     id: z.number().int().optional(),
     cashflow: z.number().optional(),
-    canon: z.number().optional(),
+    canon: z.boolean().optional(),
     contract: z.boolean().optional(),
     guarantee: z.boolean().optional(),
     serviceType: z.string().optional(),

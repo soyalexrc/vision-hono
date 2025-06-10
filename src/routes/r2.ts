@@ -16,6 +16,7 @@ r2.post('/upload/single', async (c) => {
         // Get form data
         const formData = await c.req.formData();
         const file = formData.get('file') as File;
+        const folder = formData.get('folder') as string || 'images'; // Default folder
 
         // Validate file exists
         if (!file) {
@@ -38,7 +39,7 @@ r2.post('/upload/single', async (c) => {
 
         // Upload to R2
         const r2Service = new R2Service(c.env.VISION_BUCKET);
-        const result = await r2Service.uploadFile(file);
+        const result = await r2Service.uploadFile(file, folder);
 
         if (result.success) {
             return c.json({
@@ -75,6 +76,7 @@ r2.post('/upload/multiple', async (c) => {
         // Get form data
         const formData = await c.req.formData();
         const files = formData.getAll('files') as File[];
+        const folder = formData.get('folder') as string || 'images'; // Default folder
 
         // Validate files exist
         if (!files || files.length === 0) {
@@ -114,7 +116,7 @@ r2.post('/upload/multiple', async (c) => {
             }
 
             // Upload file
-            const uploadResult = await r2Service.uploadFile(file);
+            const uploadResult = await r2Service.uploadFile(file, folder);
 
             if (uploadResult.success) {
                 results.push({

@@ -417,8 +417,9 @@ cashflowRoutes.post('/', async (c) => {
     } catch (error: any) {
         return jsonError(c, {
             status: 500,
-            message: 'Failed to create ally',
+            message: 'Failed to create cashflow',
             code: 'DATABASE_ERROR',
+            details: error.message || 'An unexpected error occurred',
         });
     }
 });
