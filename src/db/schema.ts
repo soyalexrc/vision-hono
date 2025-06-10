@@ -184,7 +184,7 @@ export const cashFlow = pgTable("CashFlow", {
 	location: text(),
 	person: integer(),
 	date: timestamp({ precision: 3, mode: 'string' }).notNull(),
-	month: text().notNull(),
+	month: text(),
 	createdBy: jsonb().notNull(),
 	isTemporalTransaction: boolean(),
 	temporalTransactionId: integer(),

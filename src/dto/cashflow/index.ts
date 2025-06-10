@@ -9,7 +9,7 @@ export const CashFlowDto = z.object({
     owner: z.number().nullable().optional(),
     person: z.number().nullable().optional(),
     date: z.string(),
-    month: z.string(),
+    month: z.string().optional(),
     location: z.string().optional(),
     attachments: z.any().optional(),
     createdBy: z.any(),
