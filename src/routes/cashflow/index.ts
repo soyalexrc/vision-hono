@@ -406,7 +406,7 @@ cashflowRoutes.post('/', async (c) => {
         }).returning();
 
         if (payments && payments.length > 0 && newCashFlow) {
-            const paymentData = payments.map((payment: any) => ({
+            const paymentData = payments.map(({id, ...payment}: any) => ({
                 ...payment,
                 cashflow: newCashFlow.id, // Assuming cashFlowId is the foreign key
             }));
