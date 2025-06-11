@@ -16,7 +16,7 @@ export const CashFlowPaymentDto = z.object({
     transactionType: z.number(),
     totalDue: z.number().optional(),
     incomeByThird: z.number().optional(),
-    entity: z.number(),
+    entity: z.number().nullable().optional(),
     pendingToCollect: z.number(),
     observation: z.string().optional(),
 });

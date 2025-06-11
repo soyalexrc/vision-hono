@@ -182,6 +182,7 @@ export const cashFlow = pgTable("CashFlow", {
 	user: integer().notNull(),
 	owner: integer(),
 	location: text(),
+	type: text(),
 	person: integer(),
 	date: timestamp({ precision: 3, mode: 'string' }).notNull(),
 	month: text(),
