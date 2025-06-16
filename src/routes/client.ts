@@ -111,6 +111,7 @@ clientsRoutes.patch('/:id', async (c) => {
                 message: 'Validation failed',
                 status: 400,
                 code: 'VALIDATION_ERROR',
+                details: parsed.error?.issues, // Add detailed error info
             });
         }
 

@@ -52,7 +52,7 @@ export const ClientDto = z.object({
     propertytype: z.string().max(256),
     allowpets: z.string().max(256),
     allowyounger: z.string().max(256),
-    requestracking: z.string().optional(),
+    requestracking: z.string().optional().nullable(),
     isinwaitinglist: z.boolean().optional(),
     budgetfrom: z.any().optional(),
     budgetto: z.any().optional(),
