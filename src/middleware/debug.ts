@@ -1,8 +1,11 @@
 import { MiddlewareHandler } from "hono";
+import {DiscordNotificationService} from "../services/external/notification/discord";
 
 export const debugMiddleware: MiddlewareHandler = async (c, next) => {
     const startTime = Date.now();
     const requestId = Math.random().toString(36).substring(7);
+    let reqBody = {};
+    const discordNotificationService = new DiscordNotificationService(c.env.DISCORD_WEBHOOK_URL);
 
     console.log(`\n=== DEBUG MIDDLEWARE [${requestId}] ===`)
     console.log('🚀 REQUEST START')
@@ -23,6 +26,7 @@ export const debugMiddleware: MiddlewareHandler = async (c, next) => {
             // Clone the request to avoid consuming the body
             const clonedReq = c.req.raw.clone()
             const body = await clonedReq.text()
+            reqBody =  body || '[Empty]';
             console.log('Request Body:', body || '[Empty]')
         } catch (err) {
             console.log('Request Body: [Unable to read]', err)
@@ -61,6 +65,23 @@ export const debugMiddleware: MiddlewareHandler = async (c, next) => {
     } catch (error) {
         console.log('❌ ERROR during request processing:', error)
         responseStatus = 500
+        await discordNotificationService.crash([
+            {"name": "method", "value": c.req.method},
+            {"name": "url", "value": c.req.url},
+            {"name": "path", "value": c.req.path},
+            {"name": "query", "value": JSON.stringify(c.req.query())},
+            {"name": "raw headers", "value": JSON.stringify(Object.fromEntries(c.req.raw.headers.entries()))},
+            {"name": "authorization", "value": c.req.header('Authorization') || 'MISSING'},
+            {"name": "authorization", "value": c.req.header('authorization') || 'MISSING'},
+            {"name": "content-type", "value": c.req.header('Content-Type') || 'MISSING'},
+            {"name": "origin", "value": c.req.header('Origin') || 'MISSING'},
+            {"name": "user-agent", "value": c.req.header('User-Agent') || 'MISSING'},
+            {"name": "request body", "value": JSON.stringify(reqBody)},
+            {"name": "response status", "value": responseStatus?.toString() || 'Unknown'},
+            {"name": "response headers", "value": JSON.stringify(responseHeaders)},
+            {"name": "response body", value: responseBody || '[Unable to read response body]'},
+            {"name": "source", "value": 'VISION INMOBILIARIA BACKEND'},
+        ])
         throw error // Re-throw to maintain error handling
     } finally {
         const endTime = Date.now()
@@ -82,6 +103,24 @@ export const debugMiddleware: MiddlewareHandler = async (c, next) => {
         // Log status-specific info
         if (responseStatus && responseStatus >= 400) {
             console.log('⚠️  ERROR RESPONSE')
+            await discordNotificationService.crash([
+                {"name": "method", "value": c.req.method},
+                {"name": "url", "value": c.req.url},
+                {"name": "path", "value": c.req.path},
+                {"name": "query", "value": JSON.stringify(c.req.query())},
+                {"name": "raw headers", "value": JSON.stringify(Object.fromEntries(c.req.raw.headers.entries()))},
+                {"name": "authorization", "value": c.req.header('Authorization') || 'MISSING'},
+                {"name": "authorization", "value": c.req.header('authorization') || 'MISSING'},
+                {"name": "content-type", "value": c.req.header('Content-Type') || 'MISSING'},
+                {"name": "origin", "value": c.req.header('Origin') || 'MISSING'},
+                {"name": "user-agent", "value": c.req.header('User-Agent') || 'MISSING'},
+                {"name": "request body", "value": JSON.stringify(reqBody)},
+                {"name": "response status", "value": responseStatus?.toString() || 'Unknown'},
+                {"name": "response headers", "value": JSON.stringify(responseHeaders)},
+                {"name": "response body", value: responseBody || '[Unable to read response body]'},
+                {"name": "duration", "value": `${duration}ms`},
+                {"name": "source", "value": 'VISION INMOBILIARIA BACKEND'},
+            ])
         } else if (responseStatus && responseStatus >= 200 && responseStatus < 300) {
             console.log('✅ SUCCESS RESPONSE')
         }

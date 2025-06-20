@@ -6,6 +6,7 @@ import cashflow from "./routes/cashflow";
 import entities from "./routes/cashflow/entities";
 import transactionTypes from "./routes/cashflow/transaction-types";
 import waysToPay from "./routes/cashflow/ways-to-pay";
+import externalRoutes from "./routes/external";
 import currencies from "./routes/cashflow/currencies";
 import auth from "./routes/auth";
 import clients from "./routes/client";
@@ -86,6 +87,7 @@ app.route('ways-to-pay', waysToPay);
 app.route('currencies', currencies);
 app.route('contactForm', contactForms);
 app.route('workWithUsForm', workWithUsForms);
+app.route('external', externalRoutes);
 app.route('r2', r2)
 app.route('user', users);
 
