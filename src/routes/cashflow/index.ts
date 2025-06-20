@@ -402,8 +402,13 @@ cashflowRoutes.post('/', async (c) => {
         const db = drizzle(sql);
         const [newCashFlow] = await db.insert(cashFlow).values({
             ...rest,
+            client: null,
+            owner: null,
+            temporalTransactionId: null,
             createdBy: rest.createdBy,
         }).returning();
+
+        console.log('newCashFlow', newCashFlow)
 
         if (payments && payments.length > 0 && newCashFlow) {
             const paymentData = payments.map(({id, ...payment}: any) => ({

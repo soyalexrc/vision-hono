@@ -7,7 +7,7 @@ export const CashFlowPaymentDto = z.object({
     contract: z.boolean().optional(),
     guarantee: z.boolean().optional(),
     serviceType: z.string().optional(),
-    reason: z.string(),
+    reason: z.string().optional(),
     service: z.string().optional(),
     taxPayer: z.string().optional(),
     amount: z.number(),

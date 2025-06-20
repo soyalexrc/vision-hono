@@ -397,15 +397,16 @@ export const cashFlow = pgTable("CashFlow", {
 	location: text(),
 	person: integer(),
 	date: timestamp({ precision: 3, mode: 'string' }).notNull(),
-	month: text().notNull(),
+	month: text(),
 	createdBy: jsonb().notNull(),
 	isTemporalTransaction: boolean(),
 	temporalTransactionId: integer(),
 	attachments: text().array(),
 	property: integer(),
 	updatedby: jsonb(),
-	createdAt: timestamp({ mode: 'string' }).defaultNow(),
+	createdAt: timestamp({ withTimezone: true, mode: 'string' }).defaultNow(),
 	updatedAt: timestamp({ mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
+	type: text().default('),
 }, (table) => [
 	foreignKey({
 			columns: [table.property],
