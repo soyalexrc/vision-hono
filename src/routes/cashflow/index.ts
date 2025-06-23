@@ -8,7 +8,7 @@ import {
     cashFlowCurrency,
     cashFlowPayment,
     cashFlowProperty, cashFlowSourceEntity, cashFlowTransactionType, cashFlowWayToPay,
-    client,
+    client, externalAdviser,
     externalPerson,
     user
 } from "../../db/schema";
@@ -95,23 +95,18 @@ cashflowRoutes.get('/', async (c) => {
                                                END
                                    )
                            ) FILTER(WHERE cfp.id IS NOT NULL),
-                           '[]'::json
-                   ) as payments,
-                   (
-                       SELECT COALESCE(JSON_AGG(currency_total), '[]'::json)
-                       FROM (
-                                SELECT
-                                    JSON_BUILD_OBJECT(
-                                            'currency', cfp2.currency,
-                                            'currency_code', curr2.code,
-                                            'total_amount', SUM(cfp2.amount)
-                                    ) as currency_total
-                                FROM "CashFlowPayment" cfp2
-                                         LEFT JOIN "CashFlowCurrency" curr2 ON cfp2.currency = curr2.id
-                                WHERE cfp2.cashflow = cf.id
-                                GROUP BY cfp2.currency, curr2.code
-                            ) currency_totals
-                   ) as total_amount,
+                           '[]' ::json
+                   )                                                           as payments,
+                   (SELECT COALESCE(JSON_AGG(currency_total), '[]'::json)
+                    FROM (SELECT JSON_BUILD_OBJECT(
+                                         'currency', cfp2.currency,
+                                         'currency_code', curr2.code,
+                                         'total_amount', SUM(cfp2.amount)
+                                 ) as currency_total
+                          FROM "CashFlowPayment" cfp2
+                                   LEFT JOIN "CashFlowCurrency" curr2 ON cfp2.currency = curr2.id
+                          WHERE cfp2.cashflow = cf.id
+                          GROUP BY cfp2.currency, curr2.code) currency_totals) as total_amount,
                    CASE
                        WHEN cf.property IS NOT NULL THEN
                            JSON_BUILD_OBJECT(
@@ -120,7 +115,7 @@ cashflowRoutes.get('/', async (c) => {
                                    'location', prop.location
                            )
                        ELSE NULL
-                       END as propertyData,
+                       END                                                     as propertyData,
                    CASE
                        WHEN cf.client IS NOT NULL THEN
                            JSON_BUILD_OBJECT(
@@ -128,7 +123,7 @@ cashflowRoutes.get('/', async (c) => {
                                    'name', client.name
                            )
                        ELSE NULL
-                       END as clientData,
+                       END                                                     as clientData,
                    CASE
                        WHEN cf.person IS NOT NULL THEN
                            JSON_BUILD_OBJECT(
@@ -137,7 +132,7 @@ cashflowRoutes.get('/', async (c) => {
                                    'source', ep.source
                            )
                        ELSE NULL
-                       END as personData
+                       END                                                     as personData
             FROM "CashFlow" cf
                      LEFT JOIN "CashFlowPayment" cfp ON cf.id = cfp.cashflow
                      LEFT JOIN "CashFlowProperty" prop ON cf.property = prop.id
@@ -148,7 +143,7 @@ cashflowRoutes.get('/', async (c) => {
                      LEFT JOIN "CashFlowSourceEntity" ent ON cfp.entity = ent.id
                      LEFT JOIN "CashFlowTransactionType" tt ON cfp."transactionType" = tt.id
                      LEFT JOIN "CashFlowWayToPay" wtp ON cfp."wayToPay" = wtp.id
-            WHERE 1=1
+            WHERE 1 = 1
         `;
 
         // Add date conditions
@@ -178,6 +173,45 @@ cashflowRoutes.get('/', async (c) => {
         return jsonError(c, {
             status: 500,
             message: 'Failed to fetch cashflows',
+            code: 'DATABASE_ERROR',
+            details: error.message || 'An unexpected error occurred',
+        });
+    }
+});
+
+cashflowRoutes.get('/getById/:id', async (c) => {
+    try {
+        const id = c.req.param('id');
+        if (!id) {
+            return jsonError(c, {
+                status: 400,
+                message: 'ID is required',
+                code: 'VALIDATION_ERROR',
+            });
+        }
+
+        const sql = neon(c.env.NEON_DB);
+        const db = drizzle(sql);
+        const data = await db.select().from(cashFlow).where(eq(cashFlow.id, Number(id)));
+        if (data.length === 0) {
+            return jsonError(c, {
+                status: 404,
+                message: 'Cashflow not found',
+                code: 'NOT_FOUND',
+            });
+        }
+        const cashflow = data[0];
+        const payments = await db.select().from(cashFlowPayment).where(eq(cashFlowPayment.cashflow, cashflow.id));
+
+        return c.json({
+            cashflow,
+            payments
+        })
+    } catch (error: any) {
+        console.log(error);
+        return jsonError(c, {
+            status: 500,
+            message: 'Failed to fetch cashflow by ID',
             code: 'DATABASE_ERROR',
             details: error.message || 'An unexpected error occurred',
         });
@@ -500,7 +534,6 @@ cashflowRoutes.post('/temporalTransaction', async (c) => {
 });
 
 
-// PATCH /allies/:allieId
 cashflowRoutes.patch('/:id', async (c) => {
     try {
         const id = c.req.param('id');
@@ -514,24 +547,62 @@ cashflowRoutes.patch('/:id', async (c) => {
         }
 
         const body = await c.req.json();
-        const parsed = AllyDto.partial().safeParse(body); // PATCH = partial update
+        const parsed = CashFlowDto.safeParse(body);
 
         if (!parsed.success) {
             return jsonError(c, {
                 message: 'Validation failed',
                 status: 400,
                 code: 'VALIDATION_ERROR',
+                details: parsed.error.errors,
             });
         }
+
+        const {payments, ...rest} = parsed.data;
+
         const sql = neon(c.env.NEON_DB);
         const db = drizzle(sql);
-        const updatedAlly = await db.update(ally).set(parsed.data).where(eq(ally.id, Number(id))).returning();
-        return c.json({data: updatedAlly[0]});
+        const updated = await db
+            .update(cashFlow)
+            .set({
+                ...rest,
+                client: null,
+                owner: null,
+                temporalTransactionId: null,
+                updatedby: rest.updatedby
+            })
+            .where(eq(cashFlow.id, Number(id)))
+            .returning();
+
+
+        if (payments && payments.length > 0) {
+            // Process all payments in parallel
+            await Promise.all(payments.map(async (payment) => {
+                if (payment.id) {
+                    // Update existing payment
+                    await db
+                        .update(cashFlowPayment)
+                        .set(payment)
+                        .where(eq(cashFlowPayment.id, payment.id));
+                } else {
+                    // Create new payment
+                    await db
+                        .insert(cashFlowPayment)
+                        .values({
+                            ...payment,
+                            cashflow: Number(id)
+                        });
+                }
+            }));
+        }
+
+        return c.json({message: 'Informacion actualizada correctamente'});
     } catch (error: any) {
         return jsonError(c, {
             status: 500,
-            message: 'Failed to update ally',
+            message: 'Failed to update cashflow',
             code: 'DATABASE_ERROR',
+            details: error.message || 'An unexpected error occurred',
         });
     }
 });
@@ -724,7 +795,7 @@ cashflowRoutes.get('/totals', async (c) => {
         const db = drizzle(sql);
 
         // Call getTotals function
-        const result = await getTotals(db, { dateFrom, dateTo });
+        const result = await getTotals(db, {dateFrom, dateTo});
 
         return c.json(result, 200);
 
@@ -747,7 +818,7 @@ cashflowRoutes.post('/utilidad-por-servicio', async (c) => {
         const db = drizzle(sql);
 
         const body = await c.req.json();
-        const { dateFrom, dateTo } = body;
+        const {dateFrom, dateTo} = body;
 
         if (!dateFrom || !dateTo) {
             return c.json({
@@ -758,7 +829,7 @@ cashflowRoutes.post('/utilidad-por-servicio', async (c) => {
 
         const utilidadPorServicio = await getUtilidadPorServicio(db, dateFrom, dateTo);
 
-        return c.json({ utilidadPorServicio }, 200);
+        return c.json({utilidadPorServicio}, 200);
 
     } catch (error) {
         console.error('Route error:', error);
@@ -778,13 +849,12 @@ cashflowRoutes.get('/debug-services', async (c) => {
 
         // Check unique service strings in payments
         const servicesFromPayments = await db.execute(rawSql.raw(`
-      SELECT DISTINCT 
-        cfp.service,
-        COUNT(*) as count
-      FROM "CashFlowPayment" cfp
-      GROUP BY cfp.service
-      ORDER BY count DESC
-    `));
+            SELECT DISTINCT cfp.service,
+                            COUNT(*) as count
+            FROM "CashFlowPayment" cfp
+            GROUP BY cfp.service
+            ORDER BY count DESC
+        `));
 
         // Check if there are payments with services
         const paymentsWithServices = await db

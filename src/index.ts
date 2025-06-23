@@ -129,7 +129,7 @@ export default {
             case '0 23 * * 1-5':
                 await generateCashFlowClose(db, env);
             break;
-            case '0 17 * * 1-5':
+            case '45 16 * * 1-5':
                 await generateCashFlowClose(db, env);
                 break
             default :
