@@ -1,4 +1,4 @@
-import { pgTable, text, serial, boolean, integer, timestamp, varchar, uniqueIndex, foreignKey, index, jsonb, numeric, doublePrecision, primaryKey, pgSequence, pgEnum } from "drizzle-orm/pg-core"
+import { pgTable, text, serial, boolean, integer, timestamp, varchar, uniqueIndex, foreignKey, index, date, jsonb, numeric, doublePrecision, primaryKey, pgSequence, pgEnum } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
 export const formTypes = pgEnum("FormTypes", ['check', 'text', 'select'])
@@ -396,7 +396,7 @@ export const cashFlow = pgTable("CashFlow", {
 	owner: integer(),
 	location: text(),
 	person: integer(),
-	date: timestamp({ precision: 3, mode: 'string' }).notNull(),
+	date: date().notNull(),
 	month: text(),
 	createdBy: jsonb().notNull(),
 	isTemporalTransaction: boolean(),
@@ -406,7 +406,7 @@ export const cashFlow = pgTable("CashFlow", {
 	updatedby: jsonb(),
 	createdAt: timestamp({ withTimezone: true, mode: 'string' }).defaultNow(),
 	updatedAt: timestamp({ mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
-	type: text().default('),
+	type: text().default('')
 }, (table) => [
 	foreignKey({
 			columns: [table.property],
@@ -651,6 +651,15 @@ export const cashFlowPayment = pgTable("CashFlowPayment", {
 			foreignColumns: [cashFlowTransactionType.id],
 			name: "cashflowpayment_transactiontype_fk"
 		}),
+]);
+
+export const closeCashFlow = pgTable("CloseCashFlow", {
+	id: serial().primaryKey().notNull(),
+	data: jsonb(),
+	createdAt: timestamp({ withTimezone: true, mode: 'string' }).defaultNow(),
+	updatedAt: timestamp({ withTimezone: true, mode: 'string' }).defaultNow(),
+}, (table) => [
+	index("idx_closecashflow_createdat").using("btree", table.createdAt.asc().nullsLast().op("timestamptz_ops")),
 ]);
 
 export const adjacenciesOnProperties = pgTable("AdjacenciesOnProperties", {

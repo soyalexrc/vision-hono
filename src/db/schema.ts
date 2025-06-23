@@ -14,7 +14,7 @@ import {
 	primaryKey,
 	pgSequence,
 	pgEnum,
-	doublePrecision
+	doublePrecision, date
 } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
@@ -184,7 +184,7 @@ export const cashFlow = pgTable("CashFlow", {
 	location: text(),
 	type: text(),
 	person: integer(),
-	date: timestamp({ precision: 3, mode: 'string' }).notNull(),
+	date: date().notNull(),
 	month: text(),
 	createdBy: jsonb().notNull(),
 	isTemporalTransaction: boolean(),
@@ -216,6 +216,16 @@ export const cashFlow = pgTable("CashFlow", {
 		name: "cashflow_person_fk"
 	}),
 ]);
+
+export const closeCashFlow = pgTable("CloseCashFlow", {
+	id: serial().primaryKey().notNull(),
+	data: jsonb(),
+	createdAt: timestamp({ withTimezone: true, mode: 'string' }).defaultNow(),
+	updatedAt: timestamp({ withTimezone: true, mode: 'string' }).defaultNow(),
+}, (table) => [
+	index("idx_closecashflow_createdat").using("btree", table.createdAt.asc().nullsLast().op("timestamptz_ops")),
+]);
+
 
 export const cashFlowPayment = pgTable("CashFlowPayment", {
 	id: serial().primaryKey().notNull(),

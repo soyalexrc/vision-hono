@@ -27,6 +27,9 @@ import jsonError from "./utils/jsonError";
 import { authMiddleware } from "./middleware/auth";
 import { cors } from 'hono/cors'
 import {debugMiddleware} from "./middleware/debug";
+import {neon} from "@neondatabase/serverless";
+import {generateCashFlowClose} from "./services/cashflow";
+import {drizzle} from "drizzle-orm/neon-http";
 
 const app = new Hono<{ Bindings: CloudflareBindings }>();
 
@@ -64,7 +67,7 @@ for (const route of protectedRoutes) {
     app.use(`/${route}`, authMiddleware) // Also protect the base route
 }
 
-app.use('*', debugMiddleware);
+// app.use('*', debugMiddleware);
 
 app.route('ally', allies);
 app.route('config', config);
@@ -114,4 +117,24 @@ app.onError((err, c) => {
 const main = new Hono<{ Bindings: CloudflareBindings }>();
 main.route('/api/v1', app);
 
-export default main;
+
+
+export default {
+    fetch: main.fetch,
+    async scheduled(controller: ScheduledController, env: any, ctx: ExecutionContext) {
+        const connectionString = env.NEON_DATABASE_URL;
+        const sql = neon(connectionString);
+        const db = drizzle(sql);
+        switch (controller.cron) {
+            case '0 23 * * 1-5':
+                await generateCashFlowClose(db, env);
+            break;
+            case '0 17 * * 1-5':
+                await generateCashFlowClose(db, env);
+                break
+            default :
+                console.warn(`No scheduled task for cron: ${controller.cron}`);
+                break;
+        }
+    },
+};

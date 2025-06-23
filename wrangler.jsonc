@@ -22,7 +22,13 @@
       "binding": "VISION_BUCKET",
       "bucket_name": "vision-bucket"
     }
-  ]
+  ],
+  "triggers": {
+    "crons": [
+      "0 23 * * 1-5",
+      "0 17 * * 1-5"
+    ]
+  }
   /**
    * Smart Placement
    * Docs: https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement

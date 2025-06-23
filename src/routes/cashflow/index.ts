@@ -17,6 +17,8 @@ import {AllyDto} from "../../dto/ally.dto";
 import {CashFlowPersonDto} from "../../dto/cashflow/person";
 import {CashFlowPropertyDto} from "../../dto/cashflow/property";
 import {CashFlowDto} from "../../dto/cashflow";
+import {generateCashFlowClose, generateCashFlowCloseV2} from "../../services/cashflow";
+import {getTotals, getUtilidadPorServicio} from "../../utils/cashflow/totals";
 
 export type Env = {
     NEON_DB: string;
@@ -29,7 +31,13 @@ cashflowRoutes.get('/', async (c) => {
     try {
         const sql = neon(c.env.NEON_DB);
         const db = drizzle(sql);
-        const data = await db.execute(rawSql`
+
+        // Get query parameters
+        const dateFrom = c.req.query('dateFrom');
+        const dateTo = c.req.query('dateTo');
+
+        // Build the complete SQL query as a string
+        let query = `
             SELECT cf.*,
                    COALESCE(
                            JSON_AGG(
@@ -52,44 +60,36 @@ cashflowRoutes.get('/', async (c) => {
                                            'entity', cfp.entity,
                                            'pendingToCollect', cfp."pendingToCollect",
                                            'observation', cfp.observation,
-                                       -- Currency data
                                            'currencyData', CASE
                                                                WHEN cfp.currency IS NOT NULL THEN
                                                                    JSON_BUILD_OBJECT(
                                                                            'id', curr.id,
                                                                            'name', curr.name,
                                                                            'code', curr.code
-                                                                       -- Add other currency fields you need
                                                                    )
                                                                ELSE NULL
                                                END,
-                                       -- Entity data
                                            'entityData', CASE
                                                              WHEN cfp.entity IS NOT NULL THEN
                                                                  JSON_BUILD_OBJECT(
                                                                          'id', ent.id,
                                                                          'name', ent.name
-                                                                     -- Add other entity fields you need
                                                                  )
                                                              ELSE NULL
                                                END,
-                                       -- Way to Pay data
                                            'wayToPayData', CASE
-                                                             WHEN cfp."wayToPay" IS NOT NULL THEN
-                                                                 JSON_BUILD_OBJECT(
-                                                                         'id', wtp.id,
-                                                                         'name', wtp.name
-                                                                     -- Add other entity fields you need
-                                                                 )
-                                                             ELSE NULL
+                                                               WHEN cfp."wayToPay" IS NOT NULL THEN
+                                                                   JSON_BUILD_OBJECT(
+                                                                           'id', wtp.id,
+                                                                           'name', wtp.name
+                                                                   )
+                                                               ELSE NULL
                                                END,
-                                       -- Transaction Type data
                                            'transactionTypeData', CASE
                                                                       WHEN cfp."transactionType" IS NOT NULL THEN
                                                                           JSON_BUILD_OBJECT(
                                                                                   'id', tt.id,
                                                                                   'name', tt.name
-                                                                              -- Add other transaction type fields you need
                                                                           )
                                                                       ELSE NULL
                                                END
@@ -106,63 +106,78 @@ cashflowRoutes.get('/', async (c) => {
                                             'currency_code', curr2.code,
                                             'total_amount', SUM(cfp2.amount)
                                     ) as currency_total
-                                FROM ${cashFlowPayment} cfp2
-                                         LEFT JOIN ${cashFlowCurrency} curr2 ON cfp2.currency = curr2.id
+                                FROM "CashFlowPayment" cfp2
+                                         LEFT JOIN "CashFlowCurrency" curr2 ON cfp2.currency = curr2.id
                                 WHERE cfp2.cashflow = cf.id
                                 GROUP BY cfp2.currency, curr2.code
                             ) currency_totals
                    ) as total_amount,
-                -- Property data
                    CASE
                        WHEN cf.property IS NOT NULL THEN
                            JSON_BUILD_OBJECT(
                                    'id', prop.id,
                                    'name', prop.name,
                                    'location', prop.location
-                               -- Add other property fields you need
                            )
                        ELSE NULL
                        END as propertyData,
-                   -- Client data
                    CASE
                        WHEN cf.client IS NOT NULL THEN
                            JSON_BUILD_OBJECT(
                                    'id', client.id,
                                    'name', client.name
-                               -- Add other client fields you need
                            )
                        ELSE NULL
                        END as clientData,
-                   -- External person data
                    CASE
                        WHEN cf.person IS NOT NULL THEN
                            JSON_BUILD_OBJECT(
                                    'id', ep.id,
                                    'name', ep.name,
                                    'source', ep.source
-                               -- Add other external person fields you need
                            )
                        ELSE NULL
                        END as personData
-            FROM ${cashFlow} cf
-                     LEFT JOIN ${cashFlowPayment} cfp ON cf.id = cfp.cashflow
-                     LEFT JOIN ${cashFlowProperty} prop ON cf.property = prop.id
-                     LEFT JOIN ${client} client ON cf.client = client.id
-                     LEFT JOIN ${user} u ON cf.user = u.id
-                     LEFT JOIN ${externalPerson} ep ON cf.person = ep.id
-                     LEFT JOIN ${cashFlowCurrency} curr ON cfp.currency = curr.id
-                     LEFT JOIN ${cashFlowSourceEntity} ent ON cfp.entity = ent.id
-                     LEFT JOIN ${cashFlowTransactionType} tt ON cfp."transactionType" = tt.id
-                     LEFT JOIN ${cashFlowWayToPay} wtp ON cfp."wayToPay" = wtp.id
-            GROUP BY cf.id, prop.id, client.id, u.id, ep.id
-        `);
+            FROM "CashFlow" cf
+                     LEFT JOIN "CashFlowPayment" cfp ON cf.id = cfp.cashflow
+                     LEFT JOIN "CashFlowProperty" prop ON cf.property = prop.id
+                     LEFT JOIN "Client" client ON cf.client = client.id
+                     LEFT JOIN "User" u ON cf.user = u.id
+                     LEFT JOIN "ExternalPerson" ep ON cf.person = ep.id
+                     LEFT JOIN "CashFlowCurrency" curr ON cfp.currency = curr.id
+                     LEFT JOIN "CashFlowSourceEntity" ent ON cfp.entity = ent.id
+                     LEFT JOIN "CashFlowTransactionType" tt ON cfp."transactionType" = tt.id
+                     LEFT JOIN "CashFlowWayToPay" wtp ON cfp."wayToPay" = wtp.id
+            WHERE 1=1
+        `;
 
-        return c.json({data: data.rows});
+        // Add date conditions
+        if (dateFrom && dateTo) {
+            query += ` AND cf.date BETWEEN '${dateFrom}' AND '${dateTo}'`;
+        } else if (dateFrom) {
+            query += ` AND cf.date >= '${dateFrom}'`;
+        } else if (dateTo) {
+            query += ` AND cf.date <= '${dateTo}'`;
+        }
+
+        query += ` GROUP BY cf.id, prop.id, client.id, u.id, ep.id ORDER BY cf.date DESC`;
+
+        // Execute with sql.raw instead of rawSql template
+        const data = await db.execute(rawSql.raw(query));
+
+        return c.json({
+            data: data.rows,
+            meta: {
+                dateFrom,
+                dateTo,
+                count: data.rows.length
+            }
+        });
     } catch (error: any) {
         console.log(error);
         return jsonError(c, {
             status: 500,
-            message: 'Failed to fetch allies',
+            message: 'Failed to fetch cashflows',
             code: 'DATABASE_ERROR',
             details: error.message || 'An unexpected error occurred',
         });
@@ -351,34 +366,6 @@ cashflowRoutes.get('/totalAvailableByEntity', async (c) => {
     }
 });
 
-
-// GET BY ID /allies/:id
-cashflowRoutes.get('/:id', async (c) => {
-    try {
-        const id = c.req.param('id');
-        if (!id) {
-            return jsonError(c, {
-                status: 400,
-                message: 'ID is required',
-                code: 'VALIDATION_ERROR',
-            });
-        }
-
-        const sql = neon(c.env.NEON_DB);
-        const db = drizzle(sql);
-        const data = await db.select().from(ally).where(eq(ally.id, Number(id)));
-        return c.json({
-            data: data[0],
-        });
-    } catch (error: any) {
-        console.log(error);
-        return jsonError(c, {
-            status: 500,
-            message: 'Failed to fetch ally',
-            code: 'DATABASE_ERROR',
-        });
-    }
-});
 
 // POST /allies
 cashflowRoutes.post('/', async (c) => {
@@ -703,4 +690,134 @@ cashflowRoutes.post('/restore', async (c) => {
         });
     }
 });
+
+// Hono route handler
+cashflowRoutes.post('/generate-cash-flow-close', async (c) => {
+    const today = new Date();
+    const startDate = new Date(today);
+    const endDate = new Date(today);
+
+    const sql = neon(c.env.NEON_DB);
+    const db = drizzle(sql);
+    const result = await generateCashFlowCloseV2(db, c.env);
+    return c.json(result);
+});
+
+cashflowRoutes.get('/totals', async (c) => {
+    try {
+        // Parse and validate body
+        const query = c.req.query();
+        const dateFrom = query.dateFrom;
+        const dateTo = query.dateTo;
+
+        if (!dateFrom || !dateTo) {
+            return jsonError(c, {
+                status: 400,
+                message: 'Both dateFrom and dateTo are required',
+                code: 'VALIDATION_ERROR',
+            })
+        }
+
+        // Get database connection
+        const connectionString = c.env.NEON_DB;
+        const sql = neon(connectionString);
+        const db = drizzle(sql);
+
+        // Call getTotals function
+        const result = await getTotals(db, { dateFrom, dateTo });
+
+        return c.json(result, 200);
+
+    } catch (error) {
+        console.error('Route error:', error);
+        return jsonError(c, {
+            status: 500,
+            message: 'Failed to fetch totals',
+            code: 'DATABASE_ERROR',
+            details: error instanceof Error ? error.message : 'An unexpected error occurred',
+        })
+    }
+});
+
+// Ruta específica para utilidad por servicio
+cashflowRoutes.post('/utilidad-por-servicio', async (c) => {
+    try {
+        const connectionString = c.env.NEON_DB;
+        const sql = neon(connectionString);
+        const db = drizzle(sql);
+
+        const body = await c.req.json();
+        const { dateFrom, dateTo } = body;
+
+        if (!dateFrom || !dateTo) {
+            return c.json({
+                message: 'Both dateFrom and dateTo are required',
+                error: true,
+            }, 400);
+        }
+
+        const utilidadPorServicio = await getUtilidadPorServicio(db, dateFrom, dateTo);
+
+        return c.json({ utilidadPorServicio }, 200);
+
+    } catch (error) {
+        console.error('Route error:', error);
+        return c.json({
+            message: error instanceof Error ? error.message : 'Error calculando utilidad por servicio',
+            error: true,
+        }, 500);
+    }
+});
+
+// Debug route to check data structure
+cashflowRoutes.get('/debug-services', async (c) => {
+    try {
+        const connectionString = c.env.NEON_DB;
+        const sql = neon(connectionString);
+        const db = drizzle(sql);
+
+        // Check unique service strings in payments
+        const servicesFromPayments = await db.execute(rawSql.raw(`
+      SELECT DISTINCT 
+        cfp.service,
+        COUNT(*) as count
+      FROM "CashFlowPayment" cfp
+      GROUP BY cfp.service
+      ORDER BY count DESC
+    `));
+
+        // Check if there are payments with services
+        const paymentsWithServices = await db
+            .select({
+                paymentId: cashFlowPayment.id,
+                service: cashFlowPayment.service,
+                amount: cashFlowPayment.amount,
+            })
+            .from(cashFlowPayment)
+            .where(rawSql`${cashFlowPayment.service} IS NOT NULL AND ${cashFlowPayment.service} != ''`)
+            .limit(10);
+
+        // Check transaction types
+        const transactionTypes = await db.select().from(cashFlowTransactionType);
+
+        // Check currencies
+        const currencies = await db.select().from(cashFlowCurrency);
+
+        return c.json({
+            servicesFromPayments,
+            paymentsWithServices,
+            transactionTypes,
+            currencies,
+            totalPaymentsWithServices: paymentsWithServices.length,
+        });
+
+    } catch (error) {
+        console.error('Debug route error:', error);
+        return c.json({
+            message: error instanceof Error ? error.message : 'Error en debug',
+            error: true,
+        }, 500);
+    }
+});
+
 export default cashflowRoutes;
