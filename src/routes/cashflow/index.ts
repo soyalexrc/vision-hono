@@ -101,7 +101,10 @@ cashflowRoutes.get('/', async (c) => {
                     FROM (SELECT JSON_BUILD_OBJECT(
                                          'currency', cfp2.currency,
                                          'currency_code', curr2.code,
-                                         'total_amount', SUM(cfp2.amount)
+                                         'total_income', SUM(CASE WHEN cfp2."transactionType" = 1 THEN cfp2.amount ELSE 0 END),
+                                         'total_outcome', SUM(CASE WHEN cfp2."transactionType" = 3 THEN cfp2.amount ELSE 0 END),
+                                         'total_pending_to_collect', SUM(cfp2."pendingToCollect"),
+                                         'total_due', SUM(cfp2."totalDue")
                                  ) as currency_total
                           FROM "CashFlowPayment" cfp2
                                    LEFT JOIN "CashFlowCurrency" curr2 ON cfp2.currency = curr2.id
@@ -578,7 +581,7 @@ cashflowRoutes.patch('/:id', async (c) => {
         if (payments && payments.length > 0) {
             // Process all payments in parallel
             await Promise.all(payments.map(async (payment) => {
-                if (payment.id) {
+                if (payment.id && payment.id > 0) {
                     // Update existing payment
                     await db
                         .update(cashFlowPayment)

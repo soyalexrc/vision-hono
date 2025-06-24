@@ -67,7 +67,9 @@ for (const route of protectedRoutes) {
     app.use(`/${route}`, authMiddleware) // Also protect the base route
 }
 
-// app.use('*', debugMiddleware);
+if (process.env.NODE_ENV == 'production') {
+    app.use('*', debugMiddleware);
+}
 
 app.route('ally', allies);
 app.route('config', config);
@@ -122,8 +124,8 @@ main.route('/api/v1', app);
 export default {
     fetch: main.fetch,
     async scheduled(controller: ScheduledController, env: any, ctx: ExecutionContext) {
-        const connectionString = env.NEON_DATABASE_URL;
-        const sql = neon(connectionString);
+        const connectionString = process.env.NEON_DATABASE_URL;
+        const sql = neon(connectionString!);
         const db = drizzle(sql);
         switch (controller.cron) {
             case '0 23 * * 1-5':
