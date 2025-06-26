@@ -1,7 +1,7 @@
 import {Hono} from 'hono';
 import {neon} from '@neondatabase/serverless';
 import {drizzle} from 'drizzle-orm/neon-http';
-import {eq, inArray, sql, sql as rawSql, or, like, ilike, and} from 'drizzle-orm';
+import {eq, inArray, sql, sql as rawSql, or, like, ilike, and, not} from 'drizzle-orm';
 import Slugify from 'slugify'
 import {
     adjacenciesOnProperties, adjacency, ally,
@@ -50,8 +50,8 @@ properties.get('/', async (c) => {
     })
         .from(property)
         .leftJoin(generalInformation, eq(property.id, generalInformation.propertyId)) // Add proper join condition
-        .leftJoin(negotiationInfomation, eq(property.id, negotiationInfomation.propertyId)); // Add proper join condition
-
+        .leftJoin(negotiationInfomation, eq(property.id, negotiationInfomation.propertyId)) // Add proper join condition
+        .where(not(eq(property.status, 'deleted')))
     return c.json({
         data: data.map(item => ({...item, coverUrl: item.coverUrl!.length > 0 ? item.coverUrl![0] : '', images: item.coverUrl ? item.coverUrl : []})),
     });

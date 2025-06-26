@@ -19,6 +19,7 @@ import {CashFlowPropertyDto} from "../../dto/cashflow/property";
 import {CashFlowDto} from "../../dto/cashflow";
 import {generateCashFlowClose, generateCashFlowCloseV2} from "../../services/cashflow";
 import {getTotals, getUtilidadPorServicio} from "../../utils/cashflow/totals";
+import {verifyJWT} from "../../utils/jwt";
 
 export type Env = {
     NEON_DB: string;
@@ -806,13 +807,43 @@ cashflowRoutes.get('/totals', async (c) => {
             })
         }
 
+        const authHeader = c.req.header('Authorization');
+        // decode the token with jose
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return jsonError(c, {
+                status: 401,
+                message: 'Unauthorized',
+                code: 'UNAUTHORIZED',
+            });
+        }
+
+        const token = authHeader.split(' ')[1];
+        const decodedToken = await verifyJWT(token);
+
         // Get database connection
         const connectionString = c.env.NEON_DB;
         const sql = neon(connectionString);
         const db = drizzle(sql);
 
+        let result = {};
+
         // Call getTotals function
-        const result = await getTotals(db, {dateFrom, dateTo});
+        const data = await getTotals(db, {dateFrom, dateTo});
+
+        if (decodedToken.id !== 13) {
+            result = {
+                ...data,
+                analisis: {
+                    ...data.analisis,
+                    disponibilidadPorEntidad: Object.fromEntries(
+                        Object.entries(data.analisis.disponibilidadPorEntidad || {})
+                            .filter(([key]) => !['Tesorería', 'Banesco Panamá'].includes(key))
+                    )
+                }
+            }
+        } else {
+            result = data;
+        }
 
         return c.json(result, 200);
 

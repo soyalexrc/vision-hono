@@ -1,11 +1,10 @@
 import { Hono } from 'hono';
 import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
-import {client, clientHistory, property} from '../db/schema';
-import {eq, inArray} from 'drizzle-orm';
+import {client, clientHistory} from '../db/schema';
+import {eq, inArray, not} from 'drizzle-orm';
 import jsonError from '../utils/jsonError';
 import {ClientDto} from "../dto/client.dto";
-import properties from "./properties";
 
 export type Env = {
     NEON_DB: string;
@@ -18,7 +17,8 @@ clientsRoutes.get('/', async (c) => {
     try {
         const sql = neon(c.env.NEON_DB);
         const db = drizzle(sql);
-        const data = await db.select().from(client);
+        const data = await db.select().from(client)
+            .where(not(eq(client.status, 'deleted')));
         const count = await db.$count(client);
         return c.json({ data, count });
     } catch (error: any) {
