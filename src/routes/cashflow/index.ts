@@ -767,14 +767,28 @@ cashflowRoutes.post('/restore', async (c) => {
 
 // Hono route handler
 cashflowRoutes.post('/generate-cash-flow-close', async (c) => {
-    const today = new Date();
-    const startDate = new Date(today);
-    const endDate = new Date(today);
 
-    const sql = neon(c.env.NEON_DB);
-    const db = drizzle(sql);
-    const result = await generateCashFlowCloseV2(db, c.env);
-    return c.json(result);
+    try {
+        const body = await c.req.json();
+        let date: any = null;
+        if (body.date) {
+            date = body.date;
+        }
+        const sql = neon(c.env.NEON_DB);
+        const db = drizzle(sql);
+        const result = await generateCashFlowCloseV2(db, c.env, date);
+        return c.json(result);
+    } catch (error: any) {
+        console.error('Error generating cash flow close:', error);
+        return jsonError(c, {
+            status: 500,
+            message: 'Failed to generate cash flow close',
+            code: 'DATABASE_ERROR',
+            details: error instanceof Error ? error.message : 'An unexpected error occurred',
+        });
+    }
+
+
 });
 
 cashflowRoutes.get('/totals', async (c) => {

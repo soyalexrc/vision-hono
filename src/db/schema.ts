@@ -220,6 +220,7 @@ export const cashFlow = pgTable("CashFlow", {
 export const closeCashFlow = pgTable("CloseCashFlow", {
 	id: serial().primaryKey().notNull(),
 	data: jsonb(),
+	date: date().notNull(),
 	createdAt: timestamp({ withTimezone: true, mode: 'string' }).defaultNow(),
 	updatedAt: timestamp({ withTimezone: true, mode: 'string' }).defaultNow(),
 }, (table) => [

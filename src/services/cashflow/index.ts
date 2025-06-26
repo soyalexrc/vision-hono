@@ -34,10 +34,10 @@ export async function getOrCacheEntityId(db: any, entityName: string): Promise<n
     return entityCache[entityName];
 }
 
-export async function generateCashFlowClose(db: any, env: any) {
-    const today = new Date();
-    const startDate = new Date(today);
-    const endDate = new Date(today);
+export async function generateCashFlowClose(db: any, env: any, date?: any) {
+    const day = date ? new Date(date) : new Date();
+    const startDate = new Date(day);
+    const endDate = new Date(day);
 
     startDate.setHours(0, 0, 0, 0);
     endDate.setHours(19, 0, 0, 0);
@@ -251,16 +251,22 @@ export async function generateCashFlowClose(db: any, env: any) {
     }
 }
 
-export async function generateCashFlowCloseV2(db: any, env: any) {
-    const today = new Date();
-    const startDate = new Date(today);
-    const endDate = new Date(today);
+export async function generateCashFlowCloseV2(db: any, env: any, date?: any) {
+    console.log('date', date);
+    const day = date ? new Date(date) : new Date();
+    const startDate = new Date(day);
+    const endDate = new Date(day);
 
     startDate.setHours(0, 0, 0, 0);
     endDate.setHours(19, 0, 0, 0);
 
     const startDateTimeString = startDate.toISOString();
     const endDateTimeString = endDate.toISOString();
+
+    console.log({
+        startDateTimeString,
+        endDateTimeString,
+    })
 
     // Send email notification
     try {
@@ -270,6 +276,7 @@ export async function generateCashFlowCloseV2(db: any, env: any) {
             data: {
                 totals: data,
             },
+            date: day,
         }).returning();
         // const emailData = {
         //     to: ['alexcarvajal2404@gmail.com', 'mgonzalezh11@gmail.com'],

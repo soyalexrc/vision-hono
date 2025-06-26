@@ -11,7 +11,7 @@ export async function generateJWT(user: any) {
     return await new SignJWT({ email: user.email, id: user.id })
         .setProtectedHeader({ alg: 'HS256' })
         .setIssuedAt()
-        .setExpirationTime('2 days')
+        .setExpirationTime('1 week')
         .sign(secret)
 }
 

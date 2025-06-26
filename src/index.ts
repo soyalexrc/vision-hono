@@ -28,7 +28,7 @@ import { authMiddleware } from "./middleware/auth";
 import { cors } from 'hono/cors'
 import {debugMiddleware} from "./middleware/debug";
 import {neon} from "@neondatabase/serverless";
-import {generateCashFlowClose} from "./services/cashflow";
+import {generateCashFlowClose, generateCashFlowCloseV2} from "./services/cashflow";
 import {drizzle} from "drizzle-orm/neon-http";
 
 const app = new Hono<{ Bindings: CloudflareBindings }>();
@@ -124,15 +124,21 @@ main.route('/api/v1', app);
 export default {
     fetch: main.fetch,
     async scheduled(controller: ScheduledController, env: any, ctx: ExecutionContext) {
-        const connectionString = process.env.NEON_DATABASE_URL;
-        const sql = neon(connectionString!);
+        const connectionString = env.NEON_DB;
+
+        if (!connectionString) {
+            console.error('NEON_DB connection string is not set in environment variables.');
+            return;
+        }
+
+        const sql = neon(connectionString);
         const db = drizzle(sql);
         switch (controller.cron) {
-            case '0 23 * * 1-5':
-                await generateCashFlowClose(db, env);
-            break;
+            // case '0 23 * * 1-5':
+            //     await generateCashFlowClose(db, env);
+            // break;
             case '45 16 * * 1-5':
-                await generateCashFlowClose(db, env);
+                await generateCashFlowCloseV2(db, env);
                 break
             default :
                 console.warn(`No scheduled task for cron: ${controller.cron}`);
