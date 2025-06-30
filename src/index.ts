@@ -67,9 +67,7 @@ for (const route of protectedRoutes) {
     app.use(`/${route}`, authMiddleware) // Also protect the base route
 }
 
-if (process.env.NODE_ENV == 'production') {
-    app.use('*', debugMiddleware);
-}
+app.use('*', debugMiddleware);
 
 app.route('ally', allies);
 app.route('config', config);

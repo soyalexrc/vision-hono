@@ -251,7 +251,7 @@ export async function generateCashFlowClose(db: any, env: any, date?: any) {
     }
 }
 
-export async function generateCashFlowCloseV2(db: any, env: any, date?: any) {
+export async function generateCashFlowCloseV2(db: any, env: any, date?: any, insert = true) {
     console.log('date', date);
     const day = date ? new Date(date) : new Date();
     const startDate = new Date(day);
@@ -270,6 +270,11 @@ export async function generateCashFlowCloseV2(db: any, env: any, date?: any) {
 
     // Send email notification
     try {
+
+        if (!insert) {
+            const data =  await db.select().from(closeCashFlow);
+            return data;
+        }
         const data = await getTotals(db, { dateFrom: startDateTimeString, dateTo: endDateTimeString })
 
         const register = await db.insert(closeCashFlow).values({

@@ -792,6 +792,23 @@ cashflowRoutes.post('/generate-cash-flow-close', async (c) => {
 
 });
 
+cashflowRoutes.get('/cashflow-close', async (c) => {
+    try {
+        const sql = neon(c.env.NEON_DB);
+        const db = drizzle(sql);        
+        const result = await generateCashFlowCloseV2(db, c.env, null, false);
+        return c.json(result);
+    } catch (error: any) {
+        console.error('Error generating cash flow close:', error);
+        return jsonError(c, {
+            status: 500,
+            message: 'Failed to generate cash flow close',
+            code: 'DATABASE_ERROR',
+            details: error instanceof Error ? error.message : 'An unexpected error occurred',
+        });
+    }
+});
+
 cashflowRoutes.get('/totals', async (c) => {
     try {
         // Parse and validate body
