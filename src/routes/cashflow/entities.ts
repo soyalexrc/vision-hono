@@ -3,7 +3,7 @@ import jsonError from '../../utils/jsonError';
 import {neon} from "@neondatabase/serverless";
 import {drizzle} from "drizzle-orm/neon-http";
 import {cashFlowSourceEntity} from "../../db/schema";
-import {verifyJWT} from "../../utils/jwt";
+// import {verifyJWT} from "../../utils/jwt";
 
 export type Env = {
     NEON_DB: string;
@@ -25,8 +25,8 @@ entities.get('/', async (c) => {
             });
         }
 
-        const token = authHeader.split(' ')[1];
-        const decodedToken = await verifyJWT(token);
+        // const token = authHeader.split(' ')[1];
+        // const decodedToken = await verifyJWT(token);
 
         const sql = neon(c.env.NEON_DB);
         const db = drizzle(sql);
@@ -35,11 +35,11 @@ entities.get('/', async (c) => {
 
         const data = await db.select().from(cashFlowSourceEntity)
 
-        if (decodedToken.id !== 13) {
-            result = data.filter(entity => entity.id !== 2 && entity.id !== 6);
-        } else {
+        // if (decodedToken.id !== 13) {
+            // result = data.filter(entity => entity.id !== 2 && entity.id !== 6);
+        // } else {
             result = data;
-        }
+        // }
 
         return c.json({
             data: result,
