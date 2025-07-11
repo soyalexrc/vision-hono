@@ -854,7 +854,7 @@ cashflowRoutes.get('/totals', async (c) => {
                     ...data.analisis,
                     disponibilidadPorEntidad: Object.fromEntries(
                         Object.entries(data.analisis.disponibilidadPorEntidad || {})
-                            .filter(([key]) => !['Tesorería', 'Banesco Panamá'].includes(key))
+                            .filter(([key]) => !['Tesorería', 'Banesco Panamá', 'Oficina San Carlos', 'Ingreso a Cuenta de Terceros'].includes(key))
                     )
                 }
             }
