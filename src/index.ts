@@ -23,6 +23,7 @@ import r2 from "./routes/r2";
 import workWithUsForms from "./routes/work-with-us";
 import services from "./routes/service";
 import users from "./routes/users";
+import scrum from "./routes/scrum";
 import jsonError from "./utils/jsonError";
 import { authMiddleware } from "./middleware/auth";
 import { cors } from 'hono/cors'
@@ -55,6 +56,7 @@ const protectedRoutes = [
     'client',
     'ally',
     'cashflow',
+    'scrum',
     'config',
     'external-adviser',
     'user',
@@ -93,6 +95,7 @@ app.route('workWithUsForm', workWithUsForms);
 app.route('external', externalRoutes);
 app.route('r2', r2)
 app.route('user', users);
+app.route('scrum', scrum);
 
 app.onError((err, c) => {
     console.error('Unhandled Error:', err);

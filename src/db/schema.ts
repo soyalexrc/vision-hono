@@ -451,6 +451,7 @@ export const service = pgTable("Service", {
 	id: serial().primaryKey().notNull(),
 	order: integer(),
 	enabled: boolean().default(true),
+	commissionPercentage: integer("commission_percentage").default(0),
 }, (table) => [
 	uniqueIndex("Service_title_key").using("btree", table.title.asc().nullsLast().op("text_ops")),
 ]);
@@ -602,6 +603,7 @@ export const user = pgTable("User", {
 	password: text().notNull(),
 	pushtoken: text(),
 	status: varchar({ length: 255 }).default('active'),
+	metadata: jsonb().default({}),
 });
 
 export const clientHistory = pgTable("ClientHistory", {

@@ -389,6 +389,16 @@ export const attributeToProperty = pgTable("_AttributeToProperty", {
 		}).onUpdate("cascade").onDelete("cascade"),
 ]);
 
+export const service = pgTable("Service", {
+	title: text().notNull(),
+	id: serial().primaryKey().notNull(),
+	order: integer(),
+	enabled: boolean().default(true),
+	commissionPercentage: integer("commission_percentage").default(0),
+}, (table) => [
+	uniqueIndex("Service_title_key").using("btree", table.title.asc().nullsLast().op("text_ops")),
+]);
+
 export const cashFlow = pgTable("CashFlow", {
 	id: serial().primaryKey().notNull(),
 	client: integer(),
@@ -406,7 +416,7 @@ export const cashFlow = pgTable("CashFlow", {
 	updatedby: jsonb(),
 	createdAt: timestamp({ withTimezone: true, mode: 'string' }).defaultNow(),
 	updatedAt: timestamp({ mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
-	type: text().default('')
+	type: text().default('),
 }, (table) => [
 	foreignKey({
 			columns: [table.property],
@@ -428,15 +438,6 @@ export const cashFlow = pgTable("CashFlow", {
 			foreignColumns: [externalPerson.id],
 			name: "cashflow_person_fk"
 		}),
-]);
-
-export const service = pgTable("Service", {
-	title: text().notNull(),
-	id: serial().primaryKey().notNull(),
-	order: integer(),
-	enabled: boolean().default(true),
-}, (table) => [
-	uniqueIndex("Service_title_key").using("btree", table.title.asc().nullsLast().op("text_ops")),
 ]);
 
 export const equipmentToProperty = pgTable("_EquipmentToProperty", {
@@ -492,27 +493,6 @@ export const propertyToUtility = pgTable("_PropertyToUtility", {
 			name: "_PropertyToUtility_B_fkey"
 		}).onUpdate("cascade").onDelete("cascade"),
 ]);
-
-export const user = pgTable("User", {
-	id: serial().primaryKey().notNull(),
-	email: text().notNull(),
-	username: text().notNull(),
-	phonenumber: text(),
-	firstname: text(),
-	lastname: text(),
-	imageurl: text(),
-	createdat: timestamp({ precision: 3, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
-	updatedat: timestamp({ precision: 3, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
-	role: text().notNull(),
-	isactive: boolean().default(true).notNull(),
-	permissions: jsonb(),
-	issuperadmin: boolean().default(false).notNull(),
-	lastlogin: timestamp({ precision: 3, mode: 'string' }),
-	twofactorenabled: boolean().default(false).notNull(),
-	password: text().notNull(),
-	pushtoken: text(),
-	status: varchar({ length: 255 }).default('active'),
-});
 
 export const clientHistory = pgTable("ClientHistory", {
 	id: serial().primaryKey().notNull(),
@@ -611,6 +591,16 @@ export const client = pgTable("Client", {
 	assignedto: jsonb(),
 });
 
+export const closeCashFlow = pgTable("CloseCashFlow", {
+	id: serial().primaryKey().notNull(),
+	data: jsonb(),
+	createdAt: timestamp({ withTimezone: true, mode: 'string' }).defaultNow(),
+	updatedAt: timestamp({ withTimezone: true, mode: 'string' }).defaultNow(),
+	date: date(),
+}, (table) => [
+	index("idx_closecashflow_createdat").using("btree", table.createdAt.asc().nullsLast().op("timestamptz_ops")),
+]);
+
 export const cashFlowPayment = pgTable("CashFlowPayment", {
 	id: serial().primaryKey().notNull(),
 	cashflow: integer().notNull(),
@@ -653,14 +643,27 @@ export const cashFlowPayment = pgTable("CashFlowPayment", {
 		}),
 ]);
 
-export const closeCashFlow = pgTable("CloseCashFlow", {
+export const user = pgTable("User", {
 	id: serial().primaryKey().notNull(),
-	data: jsonb(),
-	createdAt: timestamp({ withTimezone: true, mode: 'string' }).defaultNow(),
-	updatedAt: timestamp({ withTimezone: true, mode: 'string' }).defaultNow(),
-}, (table) => [
-	index("idx_closecashflow_createdat").using("btree", table.createdAt.asc().nullsLast().op("timestamptz_ops")),
-]);
+	email: text().notNull(),
+	username: text().notNull(),
+	phonenumber: text(),
+	firstname: text(),
+	lastname: text(),
+	imageurl: text(),
+	createdat: timestamp({ precision: 3, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
+	updatedat: timestamp({ precision: 3, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
+	role: text().notNull(),
+	isactive: boolean().default(true).notNull(),
+	permissions: jsonb(),
+	issuperadmin: boolean().default(false).notNull(),
+	lastlogin: timestamp({ precision: 3, mode: 'string' }),
+	twofactorenabled: boolean().default(false).notNull(),
+	password: text().notNull(),
+	pushtoken: text(),
+	status: varchar({ length: 255 }).default('active'),
+	metadata: jsonb().default({}),
+});
 
 export const adjacenciesOnProperties = pgTable("AdjacenciesOnProperties", {
 	propertyId: text().notNull(),

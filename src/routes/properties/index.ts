@@ -57,6 +57,44 @@ properties.get('/', async (c) => {
     });
 });
 
+// GET all properties for commission
+properties.get('/commission', async (c) => {
+    const sql = neon(c.env.NEON_DB);
+    const db = drizzle(sql);
+
+    const data = await db.select({
+        // Property fields
+        id: property.id,
+        coverUrl: property.images,
+        slug: property.slug,
+        userId: property.userId,
+        codeId: property.codeId,
+        realStateAdviser: negotiationInfomation.realStateAdviser,
+        status: property.status,
+        createdAt: property.createdAt,
+        updatedAt: property.updatedAt,
+        isFeatured: property.isFeatured,
+        // General information fields
+        publicationTitle: generalInformation.publicationTitle,
+        code: generalInformation.code,
+        propertyType: generalInformation.propertyType,
+        // Negotiation fields
+        price: negotiationInfomation.price,
+        realstateadvisername: negotiationInfomation.realstateadvisername,
+        operationType: negotiationInfomation.operationType,
+    })
+        .from(property)
+        .leftJoin(generalInformation, eq(property.id, generalInformation.propertyId)) // Add proper join condition
+        .leftJoin(negotiationInfomation, eq(property.id, negotiationInfomation.propertyId)) // Add proper join condition
+        .where(or(
+            eq(property.status, 'concretized'),
+            eq(property.status, 'concretized_fulfill')
+        ))
+    return c.json({
+        data: data.map(item => ({...item, coverUrl: item.coverUrl!.length > 0 ? item.coverUrl![0] : '', images: item.coverUrl ? item.coverUrl : []})),
+    });
+});
+
 // GET all properties featured
 properties.get('/featured', async (c) => {
     const sql = neon(c.env.NEON_DB);
