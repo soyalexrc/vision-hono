@@ -2,15 +2,10 @@ import type { Config } from 'drizzle-kit';
 
 export default {
     schema: './src/db/schema.ts',
-    out: './drizzle',
+    out: './drizzle/migrations',
     dialect: 'postgresql',
     dbCredentials: {
-        connectionString: "postgresql://neondb_owner:npg_3CWoYLGxR1Jk@ep-shy-night-a4v8hz05-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require",
-        host: 'ep-shy-night-a4v8hz05-pooler.us-east-1.aws.neon.tech',
-        port: 5432,
-        database: 'neondb',
-        ssl: 'require',
-        user: 'neondb_owner',
-        password: 'npg_3CWoYLGxR1Jk'
-    },
+        // url: process.env.NEON_DB!
+        url: 'postgresql://neondb_owner:npg_IaVWT9Mbv4NO@ep-hidden-art-a4ppmdze-pooler.us-east-1.aws.neon.tech/vision_main?sslmode=require'
+    }
 } satisfies Config;

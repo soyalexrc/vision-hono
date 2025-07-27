@@ -16,6 +16,18 @@
   },
   "observability": {
     "enabled": true
+  },
+  "r2_buckets": [
+    {
+      "binding": "VISION_BUCKET",
+      "bucket_name": "vision-bucket"
+    }
+  ],
+  "triggers": {
+    "crons": [
+      "0 23 * * 1-5",
+      "45 16 * * 1-5"
+    ]
   }
   /**
    * Smart Placement

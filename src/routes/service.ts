@@ -2,8 +2,7 @@ import { Hono } from 'hono';
 import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
 import { service, subService } from '../db/schema';
-import { eq } from 'drizzle-orm';
-import { authMiddleware } from '../middleware/auth';
+import {asc, eq} from 'drizzle-orm';
 import { ServiceDto, SubServiceDto, SubServicePatchDto } from '../dto/service.dto';
 import jsonError from "../utils/jsonError";
 
@@ -13,11 +12,11 @@ export type Env = {
 
 const serviceRoutes = new Hono<{ Bindings: Env }>();
 
-serviceRoutes.get('/', authMiddleware, async (c) => {
+serviceRoutes.get('/', async (c) => {
     const sql = neon(c.env.NEON_DB);
     const db = drizzle(sql);
 
-    const data = await db.select().from(service);
+    const data = await db.select().from(service).where(eq(service.enabled, true)).orderBy(asc(service.order));
     const count = await db.$count(service);
 
     return c.json({ data, count });
@@ -73,7 +72,7 @@ serviceRoutes.delete('/:id', async (c) => {
 });
 
 // SubServices
-serviceRoutes.get('/subservice', authMiddleware, async (c) => {
+serviceRoutes.get('/subservice', async (c) => {
     const sql = neon(c.env.NEON_DB);
     const db = drizzle(sql);
 

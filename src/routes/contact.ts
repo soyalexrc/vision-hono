@@ -3,7 +3,6 @@ import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
 import { contactForm } from '../db/schema';
 import { eq } from 'drizzle-orm';
-import { authMiddleware } from '../middleware/auth';
 import {ContactFormDto} from "../dto/contact-form.dto";
 
 export type Env = {
@@ -13,7 +12,7 @@ export type Env = {
 const contactForms = new Hono<{ Bindings: Env }>();
 
 // GET route
-contactForms.get('/', authMiddleware, async (c) => {
+contactForms.get('/', async (c) => {
     const sql = neon(c.env.NEON_DB);
     const db = drizzle(sql);
     const data = await db.select().from(contactForm);

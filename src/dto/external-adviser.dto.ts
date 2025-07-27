@@ -6,6 +6,7 @@ export const ExternalAdviserDto = z.object({
     email: z.string().email(),
     phoneNumber: z.string(),
     realStateCompanyName: z.string(),
+    status: z.string(),
 });
 
 export type ExternalAdviserDtoType = z.infer<typeof ExternalAdviserDto>;

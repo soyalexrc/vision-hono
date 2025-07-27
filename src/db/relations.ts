@@ -1,16 +1,11 @@
 import { relations } from "drizzle-orm/relations";
-import { cashFlowProperty, cashFlow, property, documentsInformation, generalInformation, locationInformation, negotiationInfomation, propertyStatusEntry, attribute, attributeToProperty, equipment, equipmentToProperty, adjacency, adjacencyToProperty, propertyToUtility, utility, service, subService, distribution, propertyToDistribution, adjacenciesOnProperties, utilitiesOnProperties, distributionsOnProperties, attributesOnProperties, equipmentsOnProperties } from "./schema";
-
-export const cashFlowRelations = relations(cashFlow, ({one}) => ({
-	cashFlowProperty: one(cashFlowProperty, {
-		fields: [cashFlow.cashFlowPropertyId],
-		references: [cashFlowProperty.id]
-	}),
-}));
-
-export const cashFlowPropertyRelations = relations(cashFlowProperty, ({many}) => ({
-	cashFlows: many(cashFlow),
-}));
+import { property, documentsInformation, generalInformation, locationInformation, negotiationInfomation, user, passkey, propertyStatusEntry, service, subService, adjacency, adjacencyToProperty, attribute, attributeToProperty, cashFlowProperty, cashFlow, client, owner, externalPerson, equipment, equipmentToProperty, distribution, propertyToDistribution, propertyToUtility, utility, clientHistory, adjacenciesOnProperties, distributionsOnProperties, utilitiesOnProperties, attributesOnProperties, equipmentsOnProperties } from "./schema";
+import {
+	cashFlowCurrency,
+	cashFlowPayment,
+	cashFlowSourceEntity,
+	cashFlowTransactionType
+} from "../../drizzle/migrations/schema";
 
 export const documentsInformationRelations = relations(documentsInformation, ({one}) => ({
 	property: one(property, {
@@ -25,14 +20,14 @@ export const propertyRelations = relations(property, ({many}) => ({
 	locationInformations: many(locationInformation),
 	negotiationInfomations: many(negotiationInfomation),
 	propertyStatusEntries: many(propertyStatusEntry),
+	adjacencyToProperties: many(adjacencyToProperty),
 	attributeToProperties: many(attributeToProperty),
 	equipmentToProperties: many(equipmentToProperty),
-	adjacencyToProperties: many(adjacencyToProperty),
-	propertyToUtilities: many(propertyToUtility),
 	propertyToDistributions: many(propertyToDistribution),
+	propertyToUtilities: many(propertyToUtility),
 	adjacenciesOnProperties: many(adjacenciesOnProperties),
-	utilitiesOnProperties: many(utilitiesOnProperties),
 	distributionsOnProperties: many(distributionsOnProperties),
+	utilitiesOnProperties: many(utilitiesOnProperties),
 	attributesOnProperties: many(attributesOnProperties),
 	equipmentsOnProperties: many(equipmentsOnProperties),
 }));
@@ -58,6 +53,18 @@ export const negotiationInfomationRelations = relations(negotiationInfomation, (
 	}),
 }));
 
+export const passkeyRelations = relations(passkey, ({one}) => ({
+	user: one(user, {
+		fields: [passkey.userId],
+		references: [user.id]
+	}),
+}));
+
+export const userRelations = relations(user, ({many}) => ({
+	passkeys: many(passkey),
+	cashFlows: many(cashFlow),
+}));
+
 export const propertyStatusEntryRelations = relations(propertyStatusEntry, ({one}) => ({
 	property: one(property, {
 		fields: [propertyStatusEntry.propertyId],
@@ -65,36 +72,15 @@ export const propertyStatusEntryRelations = relations(propertyStatusEntry, ({one
 	}),
 }));
 
-export const attributeToPropertyRelations = relations(attributeToProperty, ({one}) => ({
-	attribute: one(attribute, {
-		fields: [attributeToProperty.a],
-		references: [attribute.id]
-	}),
-	property: one(property, {
-		fields: [attributeToProperty.b],
-		references: [property.id]
+export const subServiceRelations = relations(subService, ({one}) => ({
+	service: one(service, {
+		fields: [subService.serviceId],
+		references: [service.id]
 	}),
 }));
 
-export const attributeRelations = relations(attribute, ({many}) => ({
-	attributeToProperties: many(attributeToProperty),
-	attributesOnProperties: many(attributesOnProperties),
-}));
-
-export const equipmentToPropertyRelations = relations(equipmentToProperty, ({one}) => ({
-	equipment: one(equipment, {
-		fields: [equipmentToProperty.a],
-		references: [equipment.id]
-	}),
-	property: one(property, {
-		fields: [equipmentToProperty.b],
-		references: [property.id]
-	}),
-}));
-
-export const equipmentRelations = relations(equipment, ({many}) => ({
-	equipmentToProperties: many(equipmentToProperty),
-	equipmentsOnProperties: many(equipmentsOnProperties),
+export const serviceRelations = relations(service, ({many}) => ({
+	subServices: many(subService),
 }));
 
 export const adjacencyToPropertyRelations = relations(adjacencyToProperty, ({one}) => ({
@@ -113,31 +99,104 @@ export const adjacencyRelations = relations(adjacency, ({many}) => ({
 	adjacenciesOnProperties: many(adjacenciesOnProperties),
 }));
 
-export const propertyToUtilityRelations = relations(propertyToUtility, ({one}) => ({
+export const attributeToPropertyRelations = relations(attributeToProperty, ({one}) => ({
+	attribute: one(attribute, {
+		fields: [attributeToProperty.a],
+		references: [attribute.id]
+	}),
 	property: one(property, {
-		fields: [propertyToUtility.a],
+		fields: [attributeToProperty.b],
 		references: [property.id]
 	}),
-	utility: one(utility, {
-		fields: [propertyToUtility.b],
-		references: [utility.id]
+}));
+
+export const attributeRelations = relations(attribute, ({many}) => ({
+	attributeToProperties: many(attributeToProperty),
+	attributesOnProperties: many(attributesOnProperties),
+}));
+
+export const cashFlowRelations = relations(cashFlow, ({one, many}) => ({
+	cashFlowProperty: one(cashFlowProperty, {
+		fields: [cashFlow.property],
+		references: [cashFlowProperty.id]
+	}),
+	user: one(user, {
+		fields: [cashFlow.user],
+		references: [user.id]
+	}),
+	client: one(client, {
+		fields: [cashFlow.client],
+		references: [client.id]
+	}),
+	externalPerson: one(externalPerson, {
+		fields: [cashFlow.person],
+		references: [externalPerson.id]
+	}),
+	cashFlowPayments: many(cashFlowPayment),
+}));
+
+export const cashFlowPaymentRelations = relations(cashFlowPayment, ({one}) => ({
+	cashFlow: one(cashFlow, {
+		fields: [cashFlowPayment.cashflow],
+		references: [cashFlow.id]
+	}),
+	cashFlowCurrency: one(cashFlowCurrency, {
+		fields: [cashFlowPayment.currency],
+		references: [cashFlowCurrency.id]
+	}),
+	cashFlowSourceEntity: one(cashFlowSourceEntity, {
+		fields: [cashFlowPayment.entity],
+		references: [cashFlowSourceEntity.id]
+	}),
+	cashFlowTransactionType: one(cashFlowTransactionType, {
+		fields: [cashFlowPayment.transactionType],
+		references: [cashFlowTransactionType.id]
 	}),
 }));
 
-export const utilityRelations = relations(utility, ({many}) => ({
-	propertyToUtilities: many(propertyToUtility),
-	utilitiesOnProperties: many(utilitiesOnProperties),
+export const cashFlowCurrencyRelations = relations(cashFlowCurrency, ({many}) => ({
+	cashFlowPayments: many(cashFlowPayment),
 }));
 
-export const subServiceRelations = relations(subService, ({one}) => ({
-	service: one(service, {
-		fields: [subService.serviceId],
-		references: [service.id]
+export const cashFlowSourceEntityRelations = relations(cashFlowSourceEntity, ({many}) => ({
+	cashFlowPayments: many(cashFlowPayment),
+}));
+
+export const cashFlowTransactionTypeRelations = relations(cashFlowTransactionType, ({many}) => ({
+	cashFlowPayments: many(cashFlowPayment),
+}));
+
+export const cashFlowPropertyRelations = relations(cashFlowProperty, ({many}) => ({
+	cashFlows: many(cashFlow),
+}));
+
+export const clientRelations = relations(client, ({many}) => ({
+	cashFlows: many(cashFlow),
+	clientHistories: many(clientHistory),
+}));
+
+export const ownerRelations = relations(owner, ({many}) => ({
+	cashFlows: many(cashFlow),
+}));
+
+export const externalPersonRelations = relations(externalPerson, ({many}) => ({
+	cashFlows: many(cashFlow),
+}));
+
+export const equipmentToPropertyRelations = relations(equipmentToProperty, ({one}) => ({
+	equipment: one(equipment, {
+		fields: [equipmentToProperty.a],
+		references: [equipment.id]
+	}),
+	property: one(property, {
+		fields: [equipmentToProperty.b],
+		references: [property.id]
 	}),
 }));
 
-export const serviceRelations = relations(service, ({many}) => ({
-	subServices: many(subService),
+export const equipmentRelations = relations(equipment, ({many}) => ({
+	equipmentToProperties: many(equipmentToProperty),
+	equipmentsOnProperties: many(equipmentsOnProperties),
 }));
 
 export const propertyToDistributionRelations = relations(propertyToDistribution, ({one}) => ({
@@ -156,6 +215,29 @@ export const distributionRelations = relations(distribution, ({many}) => ({
 	distributionsOnProperties: many(distributionsOnProperties),
 }));
 
+export const propertyToUtilityRelations = relations(propertyToUtility, ({one}) => ({
+	property: one(property, {
+		fields: [propertyToUtility.a],
+		references: [property.id]
+	}),
+	utility: one(utility, {
+		fields: [propertyToUtility.b],
+		references: [utility.id]
+	}),
+}));
+
+export const utilityRelations = relations(utility, ({many}) => ({
+	propertyToUtilities: many(propertyToUtility),
+	utilitiesOnProperties: many(utilitiesOnProperties),
+}));
+
+export const clientHistoryRelations = relations(clientHistory, ({one}) => ({
+	client: one(client, {
+		fields: [clientHistory.clientId],
+		references: [client.id]
+	}),
+}));
+
 export const adjacenciesOnPropertiesRelations = relations(adjacenciesOnProperties, ({one}) => ({
 	adjacency: one(adjacency, {
 		fields: [adjacenciesOnProperties.adjacencyId],
@@ -163,6 +245,17 @@ export const adjacenciesOnPropertiesRelations = relations(adjacenciesOnPropertie
 	}),
 	property: one(property, {
 		fields: [adjacenciesOnProperties.propertyId],
+		references: [property.id]
+	}),
+}));
+
+export const distributionsOnPropertiesRelations = relations(distributionsOnProperties, ({one}) => ({
+	distribution: one(distribution, {
+		fields: [distributionsOnProperties.distributionId],
+		references: [distribution.id]
+	}),
+	property: one(property, {
+		fields: [distributionsOnProperties.propertyId],
 		references: [property.id]
 	}),
 }));
@@ -175,17 +268,6 @@ export const utilitiesOnPropertiesRelations = relations(utilitiesOnProperties, (
 	utility: one(utility, {
 		fields: [utilitiesOnProperties.utilityId],
 		references: [utility.id]
-	}),
-}));
-
-export const distributionsOnPropertiesRelations = relations(distributionsOnProperties, ({one}) => ({
-	distribution: one(distribution, {
-		fields: [distributionsOnProperties.distributionId],
-		references: [distribution.id]
-	}),
-	property: one(property, {
-		fields: [distributionsOnProperties.propertyId],
-		references: [property.id]
 	}),
 }));
 

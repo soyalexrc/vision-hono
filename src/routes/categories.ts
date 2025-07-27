@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
 import { categories } from '../db/schema';
-import { eq } from 'drizzle-orm';
+import {asc, eq} from 'drizzle-orm';
 import jsonError from '../utils/jsonError';
 
 export type Env = {
@@ -16,7 +16,7 @@ categoriesRoute.get('/', async (c) => {
     try {
         const sql = neon(c.env.NEON_DB);
         const db = drizzle(sql);
-        const data = await db.select().from(categories);
+        const data = await db.select().from(categories).where(eq(categories.enabled, true)).orderBy(asc(categories.order));
         return c.json({ data });
     } catch (error: any) {
         return jsonError(c, {
