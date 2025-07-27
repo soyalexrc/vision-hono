@@ -70,7 +70,7 @@ scrum.get('/issues/backlog', async (c) => {
         const jql = `project = "${projectKey}" AND sprint is EMPTY ORDER BY created DESC`
         const encodedJql = encodeURIComponent(jql)
 
-        const data: any = await jiraRequest(c, `/rest/api/3/search?jql=${encodedJql}&fields=summary,status,assignee,priority,issuetype,created,updated,description,customfield_10016,labels`)
+        const data: any = await jiraRequest(c, `/rest/api/3/search?jql=${encodedJql}&fields=summary,status,assignee,priority,issuetype,created,updated,description,customfield_10016,labels,customfield_10091`)
 
 
         return c.json({
@@ -110,7 +110,7 @@ scrum.get('/issues/current-sprint', async (c) => {
         const activeSprint = sprintsData.values[0]
 
         // Get issues in the active sprint
-        const issuesData: any = await jiraRequest(c, `/rest/agile/1.0/sprint/${activeSprint.id}/issue?fields=summary,status,assignee,priority,issuetype,created,updated,description,customfield_10016,labels`)
+        const issuesData: any = await jiraRequest(c, `/rest/agile/1.0/sprint/${activeSprint.id}/issue?fields=summary,status,assignee,priority,issuetype,created,updated,description,customfield_10016,labels,customfield_10091`)
 
         return c.json({
             success: true,
@@ -141,7 +141,7 @@ scrum.get('/issues/:key', async (c) => {
             });
         }
 
-        const issue: any = await jiraRequest(c, `/rest/api/3/issue/${key}?fields=summary,status,assignee,priority,issuetype,created,updated,description,comment,customfield_10016,labels`)
+        const issue: any = await jiraRequest(c, `/rest/api/3/issue/${key}?fields=summary,status,assignee,priority,issuetype,created,updated,description,comment,customfield_10016,labels,customfield_10091`)
 
         return c.json({
             success: true,
